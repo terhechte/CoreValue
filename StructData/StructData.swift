@@ -8,18 +8,24 @@
 
 import Foundation
 import CoreData
+
 public protocol NSManagedStruct {
+    
     var EntityName: String {get}
+    
+    init(object: NSManagedObject)
 }
 
 public enum NSManagedStructError : ErrorType {
-    case StructConversionError()
+    case StructConversionError(message: String)
+    case StructValueError(message: String)
 }
-public func toCoreData(context: NSManagedObjectContext)(entity: NSManagedStruct) throws -> NSManagedObject {
+
+public func toCoreData<T: NSManagedStruct>(context: NSManagedObjectContext)(entity: T) throws -> NSManagedObject {
     
     let mirror = Mirror(reflecting: entity)
     
-    if let style = mirror.displayStyle where style == .Struct || style == .Class {
+    if let style = mirror.displayStyle where style == .Struct {
         
         // try to create an entity
         let desc = NSEntityDescription.entityForName(entity.EntityName, inManagedObjectContext:context)
@@ -35,13 +41,25 @@ public func toCoreData(context: NSManagedObjectContext)(entity: NSManagedStruct)
                 continue
             }
             
+            // FIXME: Try to support more types
             switch valueMaybe {
             case let k as Int16:
                 result.setValue(NSNumber(short: k), forKey: label)
+            case let k as Int32:
+                result.setValue(NSNumber(int: k), forKey: label)
+            case let k as Int64:
+                result.setValue(NSNumber(longLong: k), forKey: label)
+            case let k as Double:
+                result.setValue(NSNumber(double: k), forKey: label)
+            case let k as Float:
+                result.setValue(NSNumber(float: k), forKey: label)
+            case let k as Boolean:
+                result.setValue(NSNumber(unsignedChar: k), forKey: label)
             case let k as AnyObject:
                 result.setValue(k, forKey: label)
             default:
-                continue
+                // FIXME: Support for Transformable, by checking serialization protocols?
+                throw NSManagedStructError.StructValueError(message: "Could not decode value for field '\(label)'")
             }
             
         }
@@ -49,5 +67,5 @@ public func toCoreData(context: NSManagedObjectContext)(entity: NSManagedStruct)
         return result
     }
     
-    throw NSManagedStructError.StructConversionError()
+    throw NSManagedStructError.StructConversionError(message: "Object is no struct")
 }
