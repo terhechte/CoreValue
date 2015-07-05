@@ -10,6 +10,14 @@
 		4D59125C1B4989FB0022506E /* StructData.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D59125B1B4989FB0022506E /* StructData.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4D5912631B4989FB0022506E /* StructData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5912581B4989FB0022506E /* StructData.framework */; };
 		4D5912681B4989FB0022506E /* StructDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5912671B4989FB0022506E /* StructDataTests.swift */; };
+		4D5912731B498A170022506E /* StructData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5912721B498A170022506E /* StructData.swift */; };
+		4D5912741B498A170022506E /* StructData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5912721B498A170022506E /* StructData.swift */; };
+		4D5912761B498A480022506E /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5912751B498A480022506E /* CoreData.framework */; };
+		4D5912841B498AF90022506E /* StructDataMac.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D5912831B498AF90022506E /* StructDataMac.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		4D59128B1B498AFA0022506E /* StructDataMac.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5912811B498AF90022506E /* StructDataMac.framework */; };
+		4D5912901B498AFA0022506E /* StructDataMacTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D59128F1B498AFA0022506E /* StructDataMacTests.swift */; };
+		4D5912981B498B000022506E /* StructData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5912721B498A170022506E /* StructData.swift */; };
+		4D5912991B498B000022506E /* StructData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5912721B498A170022506E /* StructData.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -20,6 +28,13 @@
 			remoteGlobalIDString = 4D5912571B4989FB0022506E;
 			remoteInfo = StructData;
 		};
+		4D59128C1B498AFA0022506E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4D59124F1B4989FB0022506E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4D5912801B498AF90022506E;
+			remoteInfo = StructDataMac;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +44,14 @@
 		4D5912621B4989FB0022506E /* StructDataTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StructDataTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D5912671B4989FB0022506E /* StructDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructDataTests.swift; sourceTree = "<group>"; };
 		4D5912691B4989FB0022506E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4D5912721B498A170022506E /* StructData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StructData.swift; sourceTree = "<group>"; };
+		4D5912751B498A480022506E /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		4D5912811B498AF90022506E /* StructDataMac.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = StructDataMac.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D5912831B498AF90022506E /* StructDataMac.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StructDataMac.h; sourceTree = "<group>"; };
+		4D5912851B498AF90022506E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4D59128A1B498AFA0022506E /* StructDataMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StructDataMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D59128F1B498AFA0022506E /* StructDataMacTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructDataMacTests.swift; sourceTree = "<group>"; };
+		4D5912911B498AFA0022506E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -36,6 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D5912761B498A480022506E /* CoreData.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,14 +71,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4D59127D1B498AF90022506E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D5912871B498AF90022506E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D59128B1B498AFA0022506E /* StructDataMac.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		4D59124E1B4989FB0022506E = {
 			isa = PBXGroup;
 			children = (
+				4D5912751B498A480022506E /* CoreData.framework */,
 				4D59125A1B4989FB0022506E /* StructData */,
 				4D5912661B4989FB0022506E /* StructDataTests */,
+				4D5912821B498AF90022506E /* StructDataMac */,
+				4D59128E1B498AFA0022506E /* StructDataMacTests */,
 				4D5912591B4989FB0022506E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -64,6 +106,8 @@
 			children = (
 				4D5912581B4989FB0022506E /* StructData.framework */,
 				4D5912621B4989FB0022506E /* StructDataTests.xctest */,
+				4D5912811B498AF90022506E /* StructDataMac.framework */,
+				4D59128A1B498AFA0022506E /* StructDataMacTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -73,6 +117,7 @@
 			children = (
 				4D59125B1B4989FB0022506E /* StructData.h */,
 				4D59125D1B4989FB0022506E /* Info.plist */,
+				4D5912721B498A170022506E /* StructData.swift */,
 			);
 			path = StructData;
 			sourceTree = "<group>";
@@ -86,6 +131,24 @@
 			path = StructDataTests;
 			sourceTree = "<group>";
 		};
+		4D5912821B498AF90022506E /* StructDataMac */ = {
+			isa = PBXGroup;
+			children = (
+				4D5912831B498AF90022506E /* StructDataMac.h */,
+				4D5912851B498AF90022506E /* Info.plist */,
+			);
+			path = StructDataMac;
+			sourceTree = "<group>";
+		};
+		4D59128E1B498AFA0022506E /* StructDataMacTests */ = {
+			isa = PBXGroup;
+			children = (
+				4D59128F1B498AFA0022506E /* StructDataMacTests.swift */,
+				4D5912911B498AFA0022506E /* Info.plist */,
+			);
+			path = StructDataMacTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -94,6 +157,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D59125C1B4989FB0022506E /* StructData.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D59127E1B498AF90022506E /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D5912841B498AF90022506E /* StructDataMac.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -136,12 +207,51 @@
 			productReference = 4D5912621B4989FB0022506E /* StructDataTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		4D5912801B498AF90022506E /* StructDataMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4D5912921B498AFA0022506E /* Build configuration list for PBXNativeTarget "StructDataMac" */;
+			buildPhases = (
+				4D59127C1B498AF90022506E /* Sources */,
+				4D59127D1B498AF90022506E /* Frameworks */,
+				4D59127E1B498AF90022506E /* Headers */,
+				4D59127F1B498AF90022506E /* Resources */,
+				4D5912A41B4996E20022506E /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StructDataMac;
+			productName = StructDataMac;
+			productReference = 4D5912811B498AF90022506E /* StructDataMac.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		4D5912891B498AF90022506E /* StructDataMacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4D5912951B498AFA0022506E /* Build configuration list for PBXNativeTarget "StructDataMacTests" */;
+			buildPhases = (
+				4D5912861B498AF90022506E /* Sources */,
+				4D5912871B498AF90022506E /* Frameworks */,
+				4D5912881B498AF90022506E /* Resources */,
+				4D5912A31B49965D0022506E /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4D59128D1B498AFA0022506E /* PBXTargetDependency */,
+			);
+			name = StructDataMacTests;
+			productName = StructDataMacTests;
+			productReference = 4D59128A1B498AFA0022506E /* StructDataMacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
 		4D59124F1B4989FB0022506E /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = "Benedikt Terhechte";
 				TargetAttributes = {
@@ -149,6 +259,12 @@
 						CreatedOnToolsVersion = 7.0;
 					};
 					4D5912611B4989FB0022506E = {
+						CreatedOnToolsVersion = 7.0;
+					};
+					4D5912801B498AF90022506E = {
+						CreatedOnToolsVersion = 7.0;
+					};
+					4D5912891B498AF90022506E = {
 						CreatedOnToolsVersion = 7.0;
 					};
 				};
@@ -167,6 +283,8 @@
 			targets = (
 				4D5912571B4989FB0022506E /* StructData */,
 				4D5912611B4989FB0022506E /* StructDataTests */,
+				4D5912801B498AF90022506E /* StructDataMac */,
+				4D5912891B498AF90022506E /* StructDataMacTests */,
 			);
 		};
 /* End PBXProject section */
@@ -186,13 +304,58 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4D59127F1B498AF90022506E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D5912881B498AF90022506E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		4D5912A31B49965D0022506E /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp -R $(DERIVED_FILE_DIR)/Build/Products/Debug/StructDataMac.framework ~/Desktop/TestReflection/Frameworks";
+		};
+		4D5912A41B4996E20022506E /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd $REZ_SEARCH_PATHS && cp -R ./StructDataMac.framework ~/Desktop/TestReflection/Frameworks/";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4D5912531B4989FB0022506E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D5912731B498A170022506E /* StructData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,7 +363,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D5912741B498A170022506E /* StructData.swift in Sources */,
 				4D5912681B4989FB0022506E /* StructDataTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D59127C1B498AF90022506E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D5912981B498B000022506E /* StructData.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D5912861B498AF90022506E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D5912991B498B000022506E /* StructData.swift in Sources */,
+				4D5912901B498AFA0022506E /* StructDataMacTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -211,6 +392,11 @@
 			isa = PBXTargetDependency;
 			target = 4D5912571B4989FB0022506E /* StructData */;
 			targetProxy = 4D5912641B4989FB0022506E /* PBXContainerItemProxy */;
+		};
+		4D59128D1B498AFA0022506E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4D5912801B498AF90022506E /* StructDataMac */;
+			targetProxy = 4D59128C1B498AFA0022506E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -307,6 +493,7 @@
 		4D59126D1B4989FB0022506E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -317,12 +504,14 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.StructData;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
 		4D59126E1B4989FB0022506E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -356,6 +545,72 @@
 			};
 			name = Release;
 		};
+		4D5912931B498AFA0022506E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = StructDataMac/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.StructDataMac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		4D5912941B498AFA0022506E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = StructDataMac/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.StructDataMac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		4D5912961B498AFA0022506E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = StructDataMacTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.StructDataMacTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		4D5912971B498AFA0022506E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = StructDataMacTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.StructDataMacTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -381,6 +636,22 @@
 			buildConfigurations = (
 				4D5912701B4989FB0022506E /* Debug */,
 				4D5912711B4989FB0022506E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		4D5912921B498AFA0022506E /* Build configuration list for PBXNativeTarget "StructDataMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D5912931B498AFA0022506E /* Debug */,
+				4D5912941B498AFA0022506E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		4D5912951B498AFA0022506E /* Build configuration list for PBXNativeTarget "StructDataMacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D5912961B498AFA0022506E /* Debug */,
+				4D5912971B498AFA0022506E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
