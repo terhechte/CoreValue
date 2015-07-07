@@ -13,7 +13,7 @@ public protocol NSManagedStruct {
     
     var EntityName: String {get}
     
-    init(object: NSManagedObject)
+//    init(object: NSManagedObject)
 }
 
 public enum NSManagedStructError : ErrorType {

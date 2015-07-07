@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D2680261B4C5091001F8D35 /* StructDataMacTests.xcdatamodel in Sources */ = {isa = PBXBuildFile; fileRef = 4D2680251B4C5091001F8D35 /* StructDataMacTests.xcdatamodel */; };
 		4D59125C1B4989FB0022506E /* StructData.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D59125B1B4989FB0022506E /* StructData.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4D5912631B4989FB0022506E /* StructData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4D5912581B4989FB0022506E /* StructData.framework */; };
 		4D5912681B4989FB0022506E /* StructDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5912671B4989FB0022506E /* StructDataTests.swift */; };
@@ -38,6 +39,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4D2680251B4C5091001F8D35 /* StructDataMacTests.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = StructDataMacTests.xcdatamodel; sourceTree = "<group>"; };
 		4D5912581B4989FB0022506E /* StructData.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = StructData.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D59125B1B4989FB0022506E /* StructData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StructData.h; sourceTree = "<group>"; };
 		4D59125D1B4989FB0022506E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -143,6 +145,7 @@
 		4D59128E1B498AFA0022506E /* StructDataMacTests */ = {
 			isa = PBXGroup;
 			children = (
+				4D2680251B4C5091001F8D35 /* StructDataMacTests.xcdatamodel */,
 				4D59128F1B498AFA0022506E /* StructDataMacTests.swift */,
 				4D5912911B498AFA0022506E /* Info.plist */,
 			);
@@ -233,7 +236,6 @@
 				4D5912861B498AF90022506E /* Sources */,
 				4D5912871B498AF90022506E /* Frameworks */,
 				4D5912881B498AF90022506E /* Resources */,
-				4D5912A31B49965D0022506E /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -321,20 +323,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		4D5912A31B49965D0022506E /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "cp -R $(DERIVED_FILE_DIR)/Build/Products/Debug/StructDataMac.framework ~/Desktop/TestReflection/Frameworks";
-		};
 		4D5912A41B4996E20022506E /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 12;
@@ -346,7 +334,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $REZ_SEARCH_PATHS && cp -R ./StructDataMac.framework ~/Desktop/TestReflection/Frameworks/";
+			shellScript = "rm -rf ~/Desktop/TestReflection/Frameworks/StructDataMac.framework\ncd $REZ_SEARCH_PATHS && cp -R ./StructDataMac.framework ~/Desktop/TestReflection/Frameworks/";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -381,6 +369,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D5912991B498B000022506E /* StructData.swift in Sources */,
+				4D2680261B4C5091001F8D35 /* StructDataMacTests.xcdatamodel in Sources */,
 				4D5912901B498AFA0022506E /* StructDataMacTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -630,6 +619,7 @@
 				4D59126E1B4989FB0022506E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		4D59126F1B4989FB0022506E /* Build configuration list for PBXNativeTarget "StructDataTests" */ = {
 			isa = XCConfigurationList;
@@ -638,6 +628,7 @@
 				4D5912711B4989FB0022506E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		4D5912921B498AFA0022506E /* Build configuration list for PBXNativeTarget "StructDataMac" */ = {
 			isa = XCConfigurationList;
@@ -646,6 +637,7 @@
 				4D5912941B498AFA0022506E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		4D5912951B498AFA0022506E /* Build configuration list for PBXNativeTarget "StructDataMacTests" */ = {
 			isa = XCConfigurationList;
@@ -654,6 +646,7 @@
 				4D5912971B498AFA0022506E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

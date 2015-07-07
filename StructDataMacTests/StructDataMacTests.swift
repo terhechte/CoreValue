@@ -8,11 +8,46 @@
 
 import XCTest
 
+struct Employee : NSManagedStruct {
+    
+    let EntityName = "Employee"
+    
+    var name: String
+    var age: Int16
+    var position: String
+    var department: String
+    var job: String
+}
+
+func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext? {
+    let b = NSBundle(forClass: cls)
+    //let modelURL = NSBundle.mainBundle().URLForResource("StructDataMacTests", withExtension: "momd")!
+    let modelURL = b.URLForResource("StructDataMacTests", withExtension: "mom")!
+    let managedObjectModel = NSManagedObjectModel(contentsOfURL: modelURL)!
+    
+    let persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
+    do {
+        try persistentStoreCoordinator.addPersistentStoreWithType(NSInMemoryStoreType, configuration: nil, URL: nil, options: nil)
+    } catch _ {
+        return nil
+    }
+    
+    let managedObjectContext = NSManagedObjectContext()
+    managedObjectContext.persistentStoreCoordinator = persistentStoreCoordinator
+    
+    return managedObjectContext
+}
+
+
 class StructDataMacTests: XCTestCase {
+    
+    var context: NSManagedObjectContext?
     
     override func setUp() {
         super.setUp()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        if let c = setUpInMemoryManagedObjectContext(StructDataMacTests) {
+            self.context = c
+        }
     }
     
     override func tearDown() {
@@ -20,15 +55,22 @@ class StructDataMacTests: XCTestCase {
         super.tearDown()
     }
     
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
-    
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measureBlock() {
-            // Put the code you want to measure the time of here.
+    func testToCoreData() {
+        if let ctx = self.context {
+            let emp = Employee(name: "klaus", age: 20, position: "Manager", department: "Blumen", job: "Lustiger")
+            do {
+                let cd = try toCoreData(ctx)(entity: emp)
+                if (cd.valueForKey("name") as! String) != emp.name {
+                    XCTAssert(false, "Conversion failed: name")
+                }
+                if (cd.valueForKey("age") as! NSNumber).integerValue != Int(emp.age) {
+                    XCTAssert(false, "Conversion failed: age")
+                }
+            } catch _ {
+            XCTAssert(false, "Conversion failed")
+            }
+        } else {
+            XCTAssert(false, "Could not create context")
         }
     }
     
