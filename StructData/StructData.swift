@@ -14,16 +14,6 @@ infix operator <*> { associativity left precedence 130 }
 infix operator >>- { associativity left precedence 100 }
 infix operator -<< { associativity right precedence 100 }
 
-public protocol NSManagedStruct {
-    
-    typealias StructureType = Self
-    
-    var EntityName: String {get}
-    
-    //static func fromObject(object: NSManagedObject)
-    static func fromObject(o: NSManagedObject) -> Unboxed<StructureType>
-}
-
 /* Decoding */
 
 public enum Unboxed<T> {
@@ -79,9 +69,40 @@ public func <*> <A, B>(f: Unboxed<A -> B>, a: Unboxed<A>) -> Unboxed<B> {
     return a.apply(f)
 }
 
-public protocol Structured {
+public protocol _Structured {
+    var EntityName: String {get}
+}
+
+/**
+We need the _Structured protocol as a way to decode NSManagedStruct instances in NSManagedStructs.
+We can't use NSManagedStruct for this, as it has a self requirement*/
+public extension _Structured {
+    var EntityName: String { return "" }
+}
+
+/**
+This abonimation exists so that the user only has to conform to one protocol in order to support
+structdata. The code here would be a tad cleaner if we'd require the user to conform to two
+protocols, however one of them would be empty, so I suppose it's for the better to do it this way
+FIXME: Think about this some more and try to find a way to do this without this weird protocol
+setup and extension mess
+*/
+public protocol Structured : _Structured {
     typealias StructureType = Self
     static func unbox(value: AnyObject) -> Unboxed<StructureType>
+}
+
+public protocol NSManagedStruct : Structured {
+    static func fromObject(object: NSManagedObject) -> Unboxed<Self>
+}
+
+extension NSManagedStruct {
+    static func unbox<A: NSManagedStruct where A==A.StructureType>(value: AnyObject) -> Unboxed<A> {
+        if let v = value as? NSManagedObject {
+            return A.fromObject(v)
+        }
+        return Unboxed.TypeMismatch("\(value) is not NSManagedObject")
+    }
 }
 
 // pull value from nsmanagedobject
@@ -146,7 +167,7 @@ public enum NSManagedStructError : ErrorType {
     case StructValueError(message: String)
 }
 
-public func toCoreData<T: NSManagedStruct>(context: NSManagedObjectContext)(entity: T) throws -> NSManagedObject {
+public func toCoreData(context: NSManagedObjectContext)(entity: _Structured) throws -> NSManagedObject {
     
     let mirror = Mirror(reflecting: entity)
     
@@ -154,6 +175,10 @@ public func toCoreData<T: NSManagedStruct>(context: NSManagedObjectContext)(enti
         
         // try to create an entity
         let desc = NSEntityDescription.entityForName(entity.EntityName, inManagedObjectContext:context)
+        guard let _ = desc else {
+            fatalError("Entity \(entity.EntityName) not found in Core Data Model")
+        }
+        
         let result = NSManagedObject(entity: desc!, insertIntoManagedObjectContext: nil)
         
         for (labelMaybe, valueMaybe) in mirror.children {
@@ -182,9 +207,11 @@ public func toCoreData<T: NSManagedStruct>(context: NSManagedObjectContext)(enti
                 result.setValue(NSNumber(unsignedChar: k), forKey: label)
             case let k as AnyObject:
                 result.setValue(k, forKey: label)
+            case let k as _Structured:
+                try result.setValue(toCoreData(context)(entity: k), forKey: label)
             default:
                 // Test for an optional value
-                // This is a bit cumbersome as it is tryick to pattern match for Any?
+                // This is a bit cumbersome as it is tricky to pattern match for Any?
                 let mi:MirrorType = reflect(valueMaybe)
                 if mi.disposition != .Optional {
                     // If we're here, and this is not an optional, we're done
