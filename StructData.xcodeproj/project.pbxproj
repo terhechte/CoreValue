@@ -19,6 +19,10 @@
 		4D5912901B498AFA0022506E /* StructDataMacTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D59128F1B498AFA0022506E /* StructDataMacTests.swift */; };
 		4D5912981B498B000022506E /* StructData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5912721B498A170022506E /* StructData.swift */; };
 		4D5912991B498B000022506E /* StructData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5912721B498A170022506E /* StructData.swift */; };
+		4D6AEB991B4DEAE100DDD5E1 /* curry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6AEB981B4DEAE100DDD5E1 /* curry.swift */; };
+		4D6AEB9A1B4DEAE100DDD5E1 /* curry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6AEB981B4DEAE100DDD5E1 /* curry.swift */; };
+		4D6AEB9B1B4DEAE100DDD5E1 /* curry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6AEB981B4DEAE100DDD5E1 /* curry.swift */; };
+		4D6AEB9C1B4DEAE100DDD5E1 /* curry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6AEB981B4DEAE100DDD5E1 /* curry.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +58,7 @@
 		4D59128A1B498AFA0022506E /* StructDataMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StructDataMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D59128F1B498AFA0022506E /* StructDataMacTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructDataMacTests.swift; sourceTree = "<group>"; };
 		4D5912911B498AFA0022506E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4D6AEB981B4DEAE100DDD5E1 /* curry.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = curry.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,6 +122,7 @@
 		4D59125A1B4989FB0022506E /* StructData */ = {
 			isa = PBXGroup;
 			children = (
+				4D6AEB981B4DEAE100DDD5E1 /* curry.swift */,
 				4D59125B1B4989FB0022506E /* StructData.h */,
 				4D59125D1B4989FB0022506E /* Info.plist */,
 				4D5912721B498A170022506E /* StructData.swift */,
@@ -344,6 +350,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D5912731B498A170022506E /* StructData.swift in Sources */,
+				4D6AEB991B4DEAE100DDD5E1 /* curry.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -352,6 +359,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D5912741B498A170022506E /* StructData.swift in Sources */,
+				4D6AEB9A1B4DEAE100DDD5E1 /* curry.swift in Sources */,
 				4D5912681B4989FB0022506E /* StructDataTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -361,6 +369,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D5912981B498B000022506E /* StructData.swift in Sources */,
+				4D6AEB9B1B4DEAE100DDD5E1 /* curry.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -371,6 +380,7 @@
 				4D5912991B498B000022506E /* StructData.swift in Sources */,
 				4D2680261B4C5091001F8D35 /* StructDataMacTests.xcdatamodel in Sources */,
 				4D5912901B498AFA0022506E /* StructDataMacTests.swift in Sources */,
+				4D6AEB9C1B4DEAE100DDD5E1 /* curry.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
