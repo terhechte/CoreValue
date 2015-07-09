@@ -11,8 +11,6 @@ import CoreData
 
 infix operator <^> { associativity left precedence 130 }
 infix operator <*> { associativity left precedence 130 }
-infix operator >>- { associativity left precedence 100 }
-infix operator -<< { associativity right precedence 100 }
 
 /* Decoding */
 
@@ -42,24 +40,9 @@ public extension Unboxed {
         case let .TypeMismatch(string): return .TypeMismatch(string)
         }
     }
-    
-    func flatMap<U>(f: T -> Unboxed<U>) -> Unboxed<U> {
-        switch self {
-        case let .Success(value): return f(value)
-        case let .TypeMismatch(string): return .TypeMismatch(string)
-        }
-    }
-}
-
-public func pure<A>(a: A) -> Unboxed<A> {
-    return .Success(a)
 }
 
 // MARK: Monadic Operators
-
-public func >>- <A, B>(a: Unboxed<A>, f: A -> Unboxed<B>) -> Unboxed<B> {
-    return a.flatMap(f)
-}
 
 public func <^> <A, B>(f: A -> B, a: Unboxed<A>) -> Unboxed<B> {
     return a.map(f)
@@ -122,9 +105,6 @@ public func <|? <A where A: Structured, A == A.StructureType>(value: NSManagedOb
     }
     return Unboxed<A?>.Success(nil)
 }
-
-
-
 
 extension NSManagedObject: Structured {
     public static func unbox(value: AnyObject) -> Unboxed<NSManagedObject> {
