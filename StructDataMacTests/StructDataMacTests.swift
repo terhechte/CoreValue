@@ -8,8 +8,7 @@
 
 import XCTest
 
-
-struct Employee : NSManagedStruct {
+struct Employee : NSManagedStruct { //, Structured
     
     let EntityName = "Employee"
     
@@ -26,6 +25,19 @@ struct Employee : NSManagedStruct {
         <*> o <|? "position"
         <*> o <| "department"
         <*> o <| "job"
+        return x
+    }
+}
+
+struct Shop: NSManagedStruct {
+    let EntityName = "Shop"
+    
+    var name: String
+    var owner: Employee
+    
+    static func fromObject(o: NSManagedObject) -> Unboxed<Shop> {
+        let x = curry(self.init) <^> o <| "name"
+        <*> o <| "owner"
         return x
     }
 }
@@ -68,11 +80,26 @@ class StructDataMacTests: XCTestCase {
     
     var nsEmployee2: NSManagedObject!
     
+    let shop = {
+        return Shop(name: "Carl's Household Items", owner: Employee(name: "Carl", age: 66, position: nil, department: "Register", job: "Owner"))
+    }()
+    
+    var nsShop: NSManagedObject!
     
     override func setUp() {
         super.setUp()
         self.nsEmployee1 = try! toCoreData(self.context)(entity: self.employee1)
         self.nsEmployee2 = try! toCoreData(self.context)(entity: self.employee2)
+        do {
+            self.nsShop = try toCoreData(self.context)(entity: self.shop)
+        } catch NSManagedStructError.StructConversionError(let msg) {
+            XCTAssert(false, msg)
+        } catch NSManagedStructError.StructValueError(let msg) {
+            XCTAssert(false, msg)
+        } catch let e {
+            print(e)
+            XCTAssert(false, "An Error Occured")
+        }
     }
     
     override func tearDown() {
@@ -140,6 +167,37 @@ class StructDataMacTests: XCTestCase {
                t.age != self.employee2.age ||
                t.position != nil {
                 XCTAssert(false, "Conversion Error")
+            }
+        case .TypeMismatch(let msg):
+            XCTAssert(false, msg)
+        }
+    }
+    
+    func testToCoreDataSub() {
+        do {
+            let cd = try toCoreData(self.context)(entity: self.shop)
+            if (cd.valueForKey("name") as! String) != self.shop.name {
+                XCTAssert(false, "Conversion failed: name")
+            }
+            if ((cd.valueForKey("owner")?.valueForKey("name") as! String) != self.shop.owner.name) {
+                XCTAssert(false, "Conversion failed: owner's name")
+            }
+        } catch NSManagedStructError.StructConversionError(let msg) {
+            XCTAssert(false, msg)
+        } catch NSManagedStructError.StructValueError(let msg) {
+            XCTAssert(false, msg)
+        } catch let e {
+            print(e)
+            XCTAssert(false, "An Error Occured")
+        }
+    }
+    
+    func testFromCoreDataNonSub() {
+        switch Shop.fromObject(self.nsShop) {
+        case .Success(let t):
+            if t.name != self.shop.name ||
+                t.owner.name != self.shop.owner.name {
+                    XCTAssert(false, "Conversion Error")
             }
         case .TypeMismatch(let msg):
             XCTAssert(false, msg)
