@@ -20,12 +20,12 @@ struct Employee : NSManagedStruct { //, Structured
     
     // FIXME: Relationship support
     static func fromObject(o: NSManagedObject) -> Unboxed<Employee> {
-        let x = curry(self.init) <^> o <| "name"
-        <*> o <| "age"
-        <*> o <|? "position"
-        <*> o <| "department"
-        <*> o <| "job"
-        return x
+        return curry(self.init)
+            <^> o <| "name"
+            <*> o <| "age"
+            <*> o <|? "position"
+            <*> o <| "department"
+            <*> o <| "job"
     }
 }
 
@@ -36,15 +36,27 @@ struct Shop: NSManagedStruct {
     var owner: Employee
     
     static func fromObject(o: NSManagedObject) -> Unboxed<Shop> {
-        let x = curry(self.init) <^> o <| "name"
-        <*> o <| "owner"
-        return x
+        return curry(self.init)
+            <^> o <| "name"
+            <*> o <| "owner"
+    }
+}
+
+struct Company: NSManagedStruct {
+    let EntityName = "Company"
+    
+    var name: String
+    var employees: Array<Employee>
+    
+    static func fromObject(o: NSManagedObject) -> Unboxed<Company> {
+        return curry(self.init)
+        <^> o <| "name"
+        <*> o <|| "employees"
     }
 }
 
 func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext? {
     let b = NSBundle(forClass: cls)
-    //let modelURL = NSBundle.mainBundle().URLForResource("StructDataMacTests", withExtension: "momd")!
     let modelURL = b.URLForResource("StructDataMacTests", withExtension: "mom")!
     let managedObjectModel = NSManagedObjectModel(contentsOfURL: modelURL)!
     
@@ -86,12 +98,29 @@ class StructDataMacTests: XCTestCase {
     
     var nsShop: NSManagedObject!
     
+    let company = {
+        return Company(name: "Household Wares Inc.", employees: [Employee(name: "Chris High", age: 23, position: nil, department: "Factory", job: "Worker"), Employee(name: "Ben Down", age: 32, position: nil, department: "Factory", job: "Cleaner")])
+    }()
+    
+    var nsCompany: NSManagedObject!
+    
     override func setUp() {
         super.setUp()
         self.nsEmployee1 = try! toCoreData(self.context)(entity: self.employee1)
         self.nsEmployee2 = try! toCoreData(self.context)(entity: self.employee2)
         do {
             self.nsShop = try toCoreData(self.context)(entity: self.shop)
+        } catch NSManagedStructError.StructConversionError(let msg) {
+            XCTAssert(false, msg)
+        } catch NSManagedStructError.StructValueError(let msg) {
+            XCTAssert(false, msg)
+        } catch let e {
+            print(e)
+            XCTAssert(false, "An Error Occured")
+        }
+        
+        do {
+            self.nsCompany = try toCoreData(self.context)(entity: self.company)
         } catch NSManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
         } catch NSManagedStructError.StructValueError(let msg) {
@@ -192,11 +221,43 @@ class StructDataMacTests: XCTestCase {
         }
     }
     
-    func testFromCoreDataNonSub() {
+    func testFromCoreDataSub() {
         switch Shop.fromObject(self.nsShop) {
         case .Success(let t):
             if t.name != self.shop.name ||
                 t.owner.name != self.shop.owner.name {
+                    XCTAssert(false, "Conversion Error")
+            }
+        case .TypeMismatch(let msg):
+            XCTAssert(false, msg)
+        }
+    }
+    
+    func testToCoreDataSubArray() {
+        do {
+            let cd = try toCoreData(self.context)(entity: self.company)
+            print("cd is", cd)
+            if (cd.valueForKey("name") as! String) != self.company.name {
+                XCTAssert(false, "Conversion failed: name")
+            }
+            if ((cd.valueForKey("employees")?.firstObject?!.valueForKey("name") as! String) != self.company.employees[0].name) {
+                XCTAssert(false, "Conversion failed: employee's name")
+            }
+        } catch NSManagedStructError.StructConversionError(let msg) {
+            XCTAssert(false, msg)
+        } catch NSManagedStructError.StructValueError(let msg) {
+            XCTAssert(false, msg)
+        } catch let e {
+            print(e)
+            XCTAssert(false, "An Error Occured")
+        }
+    }
+    
+    func testFromCoreDataSubArray() {
+        switch Company.fromObject(self.nsCompany) {
+        case .Success(let t):
+            if t.name != self.company.name ||
+                t.employees[0].name != self.company.employees[0].name {
                     XCTAssert(false, "Conversion Error")
             }
         case .TypeMismatch(let msg):
