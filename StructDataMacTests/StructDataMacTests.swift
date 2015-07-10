@@ -106,7 +106,17 @@ class StructDataMacTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
-        self.nsEmployee1 = try! toCoreData(self.context)(entity: self.employee1)
+        do {
+            self.nsEmployee1 = try toCoreData(self.context)(entity: self.employee1)
+        }catch NSManagedStructError.StructConversionError(let msg) {
+            XCTAssert(false, msg)
+        } catch NSManagedStructError.StructValueError(let msg) {
+            XCTAssert(false, msg)
+        } catch let e {
+            print(e)
+            XCTAssert(false, "An Error Occured")
+        }
+        
         self.nsEmployee2 = try! toCoreData(self.context)(entity: self.employee2)
         do {
             self.nsShop = try toCoreData(self.context)(entity: self.shop)

@@ -12,3 +12,4 @@ This is a framework to use core data with struct models instead of NSObject-base
 - [ ] add support for optional array types ([Employee]?)
 - [ ] add support for optional sub types (Employee?)
 - [ ] add support for setting the inverse relationship (this is tricky to achieve for the struct part, as we don't have references there, since it should work as is for core data, we may not support this?)
+- [ ] think about syncing, to make sure objects from core data and back to core data are not inserted twice... (for updating, etc)

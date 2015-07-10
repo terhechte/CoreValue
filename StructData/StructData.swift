@@ -54,6 +54,8 @@ public func <*> <A, B>(f: Unboxed<A -> B>, a: Unboxed<A>) -> Unboxed<B> {
 
 public protocol _Structured {
     var EntityName: String {get}
+    // Boxing can throw, as there may be no way to construct an NSObject representation of a struct type
+    func box(object: NSManagedObject, withKey: String) throws
 }
 
 /**
@@ -66,6 +68,11 @@ typealias comm = protocol<_Structured, Equatable>
 */
 public extension _Structured {
     var EntityName: String { return "" }
+    func box(object: NSManagedObject, withKey: String) throws {
+        if let ctx = object.managedObjectContext {
+                try object.setValue(toCoreData(ctx)(entity: self), forKey: withKey)
+        }
+    }
 }
 
 
@@ -120,33 +127,14 @@ public func <|| <A where A: Structured, A == A.StructureType>(value: NSManagedOb
     return Unboxed.TypeMismatch("\(key) \(A.self)")
 }
 
-// Pull optional array from JSON
-//public func <||? <A where A: Decodable, A == A.DecodedType>(json: JSON, key: String) -> Decoded<[A]?> {
-//    return .optional(json <|| [key])
-//}
-
-
 extension NSManagedObject: Structured {
     public static func unbox(value: AnyObject) -> Unboxed<NSManagedObject> {
         return Unboxed.Success(value as! NSManagedObject)
     }
-}
-
-// <T:NSManagedStruct where T.StructureType==T>
-/*extension Array: Structured {
-    //typealias StructureType = [T]
-    // <T:Structured where T.StructureType==T>
-    public static func unbox<T:Structured where T.StructureType==T>(value: AnyObject) -> Unboxed<T.StructureType> {
-        switch value {
-        case let v as NSOrderedSet:
-            return Unboxed.Success([T.unbox(v.firstObject!).value!])
-//            return Unboxed.Success(v.map({ (e) -> T in
-//            return T.unbox(e)
-//        }))
-        default: return Unboxed.TypeMismatch("Array")
-        }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(self, forKey: withKey)
     }
-}*/
+}
 
 /*
 all other approaches (see above) are impossible (i.e. strict protocol conformance via :Structured
@@ -165,9 +153,6 @@ extension Array where T: Structured, T == T.StructureType {
         switch value {
         case let v as NSOrderedSet:
             return Unboxed.Success([T.unbox(v.firstObject!).value!])
-//            return Unboxed.Success(v.map({ (e) -> T in
-//            return T.unbox(e)
-//        }))
         default: return Unboxed.TypeMismatch("Array")
         }
     }
@@ -180,6 +165,9 @@ extension Int: Structured {
         default: return Unboxed.TypeMismatch("Int")
         }
     }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(integer: self), forKey: withKey)
+    }
 }
 
 extension Int16: Structured {
@@ -188,6 +176,9 @@ extension Int16: Structured {
         case let v as NSNumber: return Unboxed.Success(Int16(v.intValue))
         default: return Unboxed.TypeMismatch("Int16")
         }
+    }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(short: self), forKey: withKey)
     }
 }
 
@@ -198,8 +189,24 @@ extension String: Structured {
         default: return Unboxed.TypeMismatch("String")
         }
     }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(self, forKey: withKey)
+    }
 }
 
+// FIXME: Int32, Int64, Double, Float, Boolean, NSDate, NSData, NSValue
+/*
+            case let k as Int32:
+                result.setValue(NSNumber(int: k), forKey: label)
+            case let k as Int64:
+                result.setValue(NSNumber(longLong: k), forKey: label)
+            case let k as Double:
+                result.setValue(NSNumber(double: k), forKey: label)
+            case let k as Float:
+                result.setValue(NSNumber(float: k), forKey: label)
+            case let k as Boolean:
+                result.setValue(NSNumber(unsignedChar: k), forKey: label)
+*/
 
 /* Encoding */
 
@@ -208,33 +215,13 @@ public enum NSManagedStructError : ErrorType {
     case StructValueError(message: String)
 }
 
-/*
-public func toCoreData(context: NSManagedObjectContext)(entity: [_Structured]) throws -> NSOrderedSet {
-    let s = NSMutableOrderedSet()
-    for n in entity {
-        do {
-            try s.addObject(toCoreData(context)(entity: n))
-        } catch _ {
-            continue
-        }
-    }
-    
-    return s.copy() as! NSOrderedSet
-}
-
-//public func toCoreData(context: NSManagedObjectContext)(entity: Set<_Structured>) throws -> NSSet {
-//}
-
-public func ddd<T: Any where T:_Structured>(input: [T]) -> NSOrderedSet {
-    return NSOrderedSet()
-}
-*/
-
 public func toCoreData(context: NSManagedObjectContext)(entity: _Structured) throws -> NSManagedObject {
     
     let mirror = Mirror(reflecting: entity)
     
     if let style = mirror.displayStyle where style == .Struct {
+        
+        // FIXME: only create an entity, if it doesn't exist yet, otherwise update it
         
         // try to create an entity
         let desc = NSEntityDescription.entityForName(entity.EntityName, inManagedObjectContext:context)
@@ -242,7 +229,7 @@ public func toCoreData(context: NSManagedObjectContext)(entity: _Structured) thr
             fatalError("Entity \(entity.EntityName) not found in Core Data Model")
         }
         
-        let result = NSManagedObject(entity: desc!, insertIntoManagedObjectContext: nil)
+        let result = NSManagedObject(entity: desc!, insertIntoManagedObjectContext: context)
         
         for (labelMaybe, valueMaybe) in mirror.children {
             
@@ -254,96 +241,46 @@ public func toCoreData(context: NSManagedObjectContext)(entity: _Structured) thr
                 continue
             }
             
-            if valueMaybe is Array<AnyObject> {
-                print("it is a struc")
-            }
-//            print(valueMaybe)
-            // FIXME: Try to support more types
-            switch valueMaybe {
-            case let k as Int16:
-                result.setValue(NSNumber(short: k), forKey: label)
-            case let k as Int32:
-                result.setValue(NSNumber(int: k), forKey: label)
-            case let k as Int64:
-                result.setValue(NSNumber(longLong: k), forKey: label)
-            case let k as Double:
-                result.setValue(NSNumber(double: k), forKey: label)
-            case let k as Float:
-                result.setValue(NSNumber(float: k), forKey: label)
-            case let k as Boolean:
-                result.setValue(NSNumber(unsignedChar: k), forKey: label)
-            case let k as AnyObject:
-                result.setValue(k, forKey: label)
-            case let k as _Structured:
-                try result.setValue(toCoreData(context)(entity: k), forKey: label)
-            case let k as Array<Any>:
-                print("is an array")
-//                try result.setValue(toCoreData(context)(entity: k), forKey: label)
-            default:
-                // Test the type in more detail, for optionals, arrays, sets
-                // This is a bit cumbersome as it is tricky to pattern match for Any?
-                let mi:MirrorType = reflect(valueMaybe)
-//                print(mi)
-                if mi.disposition == .IndexContainer {
-//                    let kx = valueMaybe as! [_Structured]
-//                    print("is in disposition yeah", kx)
-//                    ddd(valueMaybe)
-                }
-                // IMPORTANT, PUT THIS BACK IN!
-//                if mi.disposition != .Optional {
-//                    // If we're here, and this is not an optional, we're done
-//                    throw NSManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
-//                }
-                // TILL HERE!
-                if mi.count == 0 {
-                     // Optional.None
+            // FIXME: This still looks awful. Need to spend more time cleaning this up
+            if let value = valueMaybe as? _Structured {
+                try value.box(result, withKey: label)
+            } else {
+                let valueMirror:MirrorType = reflect(valueMaybe)
+                if valueMirror.count == 0 {
                     result.setValue(nil, forKey: label)
                 } else {
-                    let (_,some) = mi[0]
-                    switch some.value {
-                    case let k as AnyObject:
-                        result.setValue(k, forKey: label)
-                    case let k as _Structured:
-                        var bcde: [NSManagedObject] = []
-                        for c in 0..<mi.count {
-                            let (_,xsome) = mi[c]
-                            print("xsome is", xsome)
-                            if let xxx = xsome.value as? _Structured {
-                                do {
-                                    let uxx = try toCoreData(context)(entity: xxx)
-                                    bcde.append(uxx)
-                                } catch NSManagedStructError.StructConversionError(let msg) {
-                                    print (msg)
-                                } catch NSManagedStructError.StructValueError(let msg) {
-                                    print (msg)
-                                } catch let e {
-                                    print(e)
-                                }
+                    // Since MirrorType has no typealias for it's children, we have to 
+                    // unpack the first one in order to identify them
+                    switch (valueMirror.count, valueMirror.disposition, valueMirror[0]) {
+                    case (_, .Optional, (_, let some)) where some.value is AnyObject:
+                        result.setValue(some.value as? AnyObject, forKey: label)
+                    case (_, .IndexContainer, (_, let some)) where some.value is _Structured:
+                        // Since valueMirror isn't an array type, we can't map over it or even properly extend it
+                        var objects: [NSManagedObject] = []
+                        for c in 0..<valueMirror.count {
+                            if let value = valueMirror[c].1.value as? _Structured {
+                                objects.append(try toCoreData(context)(entity: value))
                             }
                         }
-                        if bcde.count > 0 {
-                            let uxxxx = NSOrderedSet(array: bcde)
-                            print("is in array in", uxxxx)
-                            print("result is", result)
-                            let uuu = result.mutableOrderedSetValueForKey(label)
-                            uuu.addObjectsFromArray(bcde)
-//                            if let rxr = result as NSManagedObject {
-//                                
-//                                result.setValue(uxxxx, forKey: label)
-//                            }
+                        
+                        if objects.count > 0 {
+                            let mutableValue = result.mutableOrderedSetValueForKey(label)
+                            mutableValue.addObjectsFromArray(objects)
                         }
+                        
                     default:
-                        print("argh", some.value)
-                        throw NSManagedStructError.StructValueError(message: "Could not ddddecode value for field '\(label)' obj \(valueMaybe)")
+                        // If we end up here, we were unable to decode it
+                        throw NSManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
                     }
                 }
-                // FIXME: Support for Transformable, by checking serialization protocols?
             }
             
         }
         
         return result
     }
-    
     throw NSManagedStructError.StructConversionError(message: "Object is no struct")
 }
+
+
+
