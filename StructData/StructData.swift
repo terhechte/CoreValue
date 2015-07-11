@@ -9,40 +9,31 @@
 import Foundation
 import CoreData
 
+// MARK: -
+// MARK: Unboxing
+
+/**
+Unboxing NSManagedObjects into Value types.
+
+- Unboxing can fail, so the unboxed value is an either type that explains the error via TypeMismatch
+- Unboxing cannot utilize the Swift or the NSManagedObject reflection mechanisms as both are too
+  dynamic for Swift's typechecker. So we utilize custom operators and curryed object construction
+  like in Argo (https://github.com/thoughtbot/Argo) which is also where the gists for the unboxing
+  code originates from
+- Unboxing defines the 'Unboxing' protocol which a type has to conform to in order to be able
+  to be unboxed
+*/
+
+// MARK: Custom Operators
+
+// monadic operators
 infix operator <^> { associativity left precedence 130 }
 infix operator <*> { associativity left precedence 130 }
 
-/* Decoding */
-
-public enum Unboxed<T> {
-    case Success(T)
-    case TypeMismatch(String)
-    
-    public var value: T? {
-        switch self {
-        case let .Success(value): return value
-        default: return .None
-        }
-    }
-}
-
-public extension Unboxed {
-    func map<U>(f: T -> U) -> Unboxed<U> {
-        switch self {
-        case let .Success(value): return .Success(f(value))
-        case let .TypeMismatch(string): return .TypeMismatch(string)
-        }
-    }
-    
-    func apply<U>(f: Unboxed<T -> U>) -> Unboxed<U> {
-        switch f {
-        case let .Success(value): return value <^> self
-        case let .TypeMismatch(string): return .TypeMismatch(string)
-        }
-    }
-}
-
-// MARK: Monadic Operators
+// pull value/s from nsmanagedobject
+infix operator <| { associativity left precedence 150 }
+infix operator <|| { associativity left precedence 150 }
+infix operator <|? { associativity left precedence 150 }
 
 public func <^> <A, B>(f: A -> B, a: Unboxed<A>) -> Unboxed<B> {
     return a.map(f)
@@ -51,45 +42,6 @@ public func <^> <A, B>(f: A -> B, a: Unboxed<A>) -> Unboxed<B> {
 public func <*> <A, B>(f: Unboxed<A -> B>, a: Unboxed<A>) -> Unboxed<B> {
     return a.apply(f)
 }
-
-public protocol Boxing {
-    var EntityName: String {get}
-    // Boxing can throw, as there may be no way to construct an NSObject representation of a struct type
-    func box(object: NSManagedObject, withKey: String) throws
-}
-
-public extension Boxing {
-    var EntityName: String { return "" }
-}
-
-public protocol Unboxing {
-    typealias StructureType = Self
-    static func unbox(value: AnyObject) -> Unboxed<StructureType>
-}
-
-
-public protocol NSManagedStruct : Boxing, Unboxing {
-    static func fromObject(object: NSManagedObject) -> Unboxed<Self>
-}
-
-extension NSManagedStruct {
-    static func unbox<A: NSManagedStruct where A==A.StructureType>(value: AnyObject) -> Unboxed<A> {
-        if let v = value as? NSManagedObject {
-            return A.fromObject(v)
-        }
-        return Unboxed.TypeMismatch("\(value) is not NSManagedObject")
-    }
-    func box(object: NSManagedObject, withKey: String) throws {
-        if let ctx = object.managedObjectContext {
-                try object.setValue(toCoreData(ctx)(entity: self), forKey: withKey)
-        }
-    }
-}
-
-// pull value from nsmanagedobject
-infix operator <| { associativity left precedence 150 }
-infix operator <|| { associativity left precedence 150 }
-infix operator <|? { associativity left precedence 150 }
 
 public func <| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) -> Unboxed<A> {
     if let s = value.valueForKey(key) {
@@ -112,6 +64,131 @@ public func <|| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObje
     return Unboxed.TypeMismatch("\(key) \(A.self)")
 }
 
+// MARK: Types
+
+/**
+Each Unboxing operation returns this either type which allows unboxing to fail
+if the NSManagedObject does not offer the correct values / datatypes for the
+Value type that is to be constructed.
+
+- parameter T: is the value type that we're trying to construct.
+*/
+public enum Unboxed<T> {
+    case Success(T)
+    case TypeMismatch(String)
+    
+    public var value: T? {
+        switch self {
+        case let .Success(value): return value
+        default: return .None
+        }
+    }
+}
+
+/**
+Support for Monadic operations on the Unboxed type
+*/
+public extension Unboxed {
+    func map<U>(f: T -> U) -> Unboxed<U> {
+        switch self {
+        case let .Success(value): return .Success(f(value))
+        case let .TypeMismatch(string): return .TypeMismatch(string)
+        }
+    }
+    
+    func apply<U>(f: Unboxed<T -> U>) -> Unboxed<U> {
+        switch f {
+        case let .Success(value): return value <^> self
+        case let .TypeMismatch(string): return .TypeMismatch(string)
+        }
+    }
+}
+
+/**
+The *Unboxing* protocol
+The *unbox* function recieves a Core Data object and returns an unboxed value type. This value type
+is defined by the StructureType typealias
+*/
+public protocol Unboxing {
+    typealias StructureType = Self
+    /**
+    Unbox a data from an NSManagedObject instance (or the instance itself) into a value type
+    - parameter value: The data to be unboxed into a value type
+    */
+    static func unbox(value: AnyObject) -> Unboxed<StructureType>
+}
+
+// MARK: -
+// MARK: Boxing
+
+/**
+Boxing value types into NSManagedObject instances
+
+- Boxing can fail if the value type in question is not supported (i.e. enum) or doesn't conform to the Boxing
+  protocol
+- Boxing requires the name of the entity that the boxed NSManagedObject maps to. It would be possible
+  to just use the value type's name (i.e. struct Employee) but I decided against it to give the user
+  more control over this
+*/
+
+public protocol Boxing {
+    /** The name of the Core Data entity that the boxed value type should become */
+    var EntityName: String {get}
+    /** Box Self into the given managed object with key *withKey*
+    - parameter object: The NSManagedObject that the value type self should be boxed into
+    - parameter withKey: The name of the property in the NSManagedObject that it should be written to
+    */
+    func box(object: NSManagedObject, withKey: String) throws
+}
+
+/**
+Boxing will also be used for minor value types like Int16 or Int32. Those don't require a
+EntityName. Thus, by default the EntityName is the empty string
+
+FIXME: Consider just making EntityName optional
+*/
+public extension Boxing {
+    var EntityName: String { return "" }
+}
+
+/**
+The NSManagedStruct protocol is only for high level struct value types that should be
+boxed into core data and unboxed from core data. It offers a consistent API (fromObject)
+and bundles the unboxing and boxing protocols for less typing
+*/
+public protocol NSManagedStruct : Boxing, Unboxing {
+    /** 
+    Call on any NSManagedStruct supporting object to create a self instance from a
+    NSManagedObject. 
+    
+    The fromObject implementation can be implemented with custom operators
+    to quickly map the object properties onto the required types (see examples)
+    
+    - parameter object: The NSManagedObject that should be converted to an instance of self
+    */
+    static func fromObject(object: NSManagedObject) -> Unboxed<Self>
+}
+
+/**
+NSManagedStruct already contains implementations for unbox and box
+*/
+extension NSManagedStruct {
+    static func unbox<A: NSManagedStruct where A==A.StructureType>(value: AnyObject) -> Unboxed<A> {
+        if let v = value as? NSManagedObject {
+            return A.fromObject(v)
+        }
+        return Unboxed.TypeMismatch("\(value) is not NSManagedObject")
+    }
+    func box(object: NSManagedObject, withKey: String) throws {
+        if let ctx = object.managedObjectContext {
+                try object.setValue(toCoreData(ctx)(entity: self), forKey: withKey)
+        }
+    }
+}
+
+/**
+NSManagedObject already contains implementations for unbox and box
+*/
 extension NSManagedObject: Unboxing, Boxing {
     public static func unbox(value: AnyObject) -> Unboxed<NSManagedObject> {
         return Unboxed.Success(value as! NSManagedObject)
@@ -121,6 +198,15 @@ extension NSManagedObject: Unboxing, Boxing {
     }
 }
 
+/**
+Arrays cannot implement the Unboxing protocol because they do not contain a 
+one to one mapping of the type T1 input to the type T2 output. Instead, they map
+from T1 input to [T2] output. In order to get the type checker to understand this,
+we can informally support the unboxing protocol by explaining the types in terms of
+type constraints. 
+
+- Currently, there's no support for NSSet
+*/
 extension Array where T: Unboxing, T == T.StructureType {
     public static func unbox(value: AnyObject) -> Unboxed<[T]> {
         switch value {
@@ -139,6 +225,12 @@ extension Array where T: Unboxing, T == T.StructureType {
         }
     }
 }
+
+// MARK: -
+// MARK: Type Extensions
+
+// Extending existing value types to support Boxing and Unboxing
+// For all types that core data supports
 
 extension Int: Unboxing, Boxing {
     public static func unbox(value: AnyObject) -> Unboxed<Int> {
@@ -190,13 +282,22 @@ extension String: Unboxing, Boxing {
                 result.setValue(NSNumber(unsignedChar: k), forKey: label)
 */
 
-/* Encoding */
-
+/**
+This error will be thrown if boxing fails because the core data model
+does not know or support the requested property
+*/
 public enum NSManagedStructError : ErrorType {
     case StructConversionError(message: String)
     case StructValueError(message: String)
 }
 
+/**
+This function uses reflection to convert a value type struct into a NSManagedObject instance
+of a particular entity
+
+- This is still more or less a draft
+
+*/
 public func toCoreData(context: NSManagedObjectContext)(entity: Boxing) throws -> NSManagedObject {
     
     let mirror = Mirror(reflecting: entity)
