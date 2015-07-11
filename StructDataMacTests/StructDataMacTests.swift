@@ -253,6 +253,11 @@ class StructDataMacTests: XCTestCase {
             if ((cd.valueForKey("employees")?.firstObject?!.valueForKey("name") as! String) != self.company.employees[0].name) {
                 XCTAssert(false, "Conversion failed: employee's name")
             }
+            if let ab:NSOrderedSet = cd.valueForKey("employees") as? NSOrderedSet {
+                if ab.count != self.company.employees.count {
+                    XCTAssert(false, "Did not box all employees")
+                }
+            }
         } catch NSManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
         } catch NSManagedStructError.StructValueError(let msg) {
@@ -269,6 +274,9 @@ class StructDataMacTests: XCTestCase {
             if t.name != self.company.name ||
                 t.employees[0].name != self.company.employees[0].name {
                     XCTAssert(false, "Conversion Error")
+            }
+            if t.employees.count != self.company.employees.count {
+                XCTAssert(false, "Wrong amount of employees")
             }
         case .TypeMismatch(let msg):
             XCTAssert(false, msg)
