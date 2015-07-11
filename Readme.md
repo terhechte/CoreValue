@@ -7,7 +7,7 @@ This is a framework to use core data with struct models instead of NSObject-base
 
 ### Todo
 - [ ] Add query methods to query from core data straight into structs
-- [ ] support more types, including NSData, NSDate, and transformable (NSValue)
+- [x] support more types, including NSData, NSDate, and transformable (NSValue)
 - [x] add support for array types ([Employee])
 - [ ] add support for optional array types ([Employee]?)
 - [x] add support for optional sub types (Employee?)
@@ -15,8 +15,8 @@ This is a framework to use core data with struct models instead of NSObject-base
 - [ ] think about syncing, to make sure objects from core data and back to core data are not inserted twice... (for updating, etc)
 - [ ] think about renaming to CoreValue / NSManagedValue
 - [ ] add iOS target
-- [ ] make the managed object context optional
-- [ ] move the toCoreData into the boxing protocol and fill it with a protocol extension
+- [x] make the managed object context optional
+- [x] move the toCoreData into the boxing protocol and fill it with a protocol extension
 - [ ] add support for nsset / unordered lists
 - [ ] add support for fetched properties
 - [ ] test with let instead of var types

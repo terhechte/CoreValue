@@ -139,6 +139,18 @@ public protocol Boxing {
     - parameter withKey: The name of the property in the NSManagedObject that it should be written to
     */
     func box(object: NSManagedObject, withKey: String) throws
+    
+    /**
+    Convert the current NSManagedStruct instance to a NSManagedObject
+    throws 'NSManagedStructError' if the process fails.
+    
+    The implementation for this is included via an extension (see below)
+    it uses reflection to automatically convert this
+    
+    - parameter context: An Optional NSManagedObjectContext. If it is not provided, the objects
+    are only temporary.
+    */
+    func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject
 }
 
 /**
@@ -167,6 +179,7 @@ public protocol NSManagedStruct : Boxing, Unboxing {
     - parameter object: The NSManagedObject that should be converted to an instance of self
     */
     static func fromObject(object: NSManagedObject) -> Unboxed<Self>
+    
 }
 
 /**
@@ -180,9 +193,7 @@ extension NSManagedStruct {
         return Unboxed.TypeMismatch("\(value) is not NSManagedObject")
     }
     func box(object: NSManagedObject, withKey: String) throws {
-        if let ctx = object.managedObjectContext {
-                try object.setValue(toCoreData(ctx)(entity: self), forKey: withKey)
-        }
+        try object.setValue(self.toObject(object.managedObjectContext), forKey: withKey)
     }
 }
 
@@ -375,76 +386,75 @@ public enum NSManagedStructError : ErrorType {
 }
 
 /**
-This function uses reflection to convert a value type struct into a NSManagedObject instance
-of a particular entity
-
-- This is still more or less a draft
-
+Extend *Boxing* with code that utilizes reflection to convert a value type into an
+NSManagedObject
 */
-public func toCoreData(context: NSManagedObjectContext)(entity: Boxing) throws -> NSManagedObject {
-    
-    let mirror = Mirror(reflecting: entity)
-    
-    if let style = mirror.displayStyle where style == .Struct {
+extension Boxing {
+    public func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
         
-        // FIXME: only create an entity, if it doesn't exist yet, otherwise update it
+        let mirror = Mirror(reflecting: self)
         
-        // try to create an entity
-        let desc = NSEntityDescription.entityForName(entity.EntityName, inManagedObjectContext:context)
-        guard let _ = desc else {
-            fatalError("Entity \(entity.EntityName) not found in Core Data Model")
-        }
-        
-        let result = NSManagedObject(entity: desc!, insertIntoManagedObjectContext: context)
-        
-        for (labelMaybe, valueMaybe) in mirror.children {
+        if let style = mirror.displayStyle where style == .Struct {
             
-            guard let label = labelMaybe else {
-                continue
+            // FIXME: only create an entity, if it doesn't exist yet, otherwise update it
+            
+            // try to create an entity
+            let desc = NSEntityDescription.entityForName(self.EntityName, inManagedObjectContext:(context ?? nil)!)
+            guard let _ = desc else {
+                fatalError("Entity \(self.EntityName) not found in Core Data Model")
             }
             
-            if ["EntityName"].contains(label) {
-                continue
-            }
+            let result = NSManagedObject(entity: desc!, insertIntoManagedObjectContext: context)
             
-            // FIXME: This still looks awful. Need to spend more time cleaning this up
-            if let value = valueMaybe as? Boxing {
-                try value.box(result, withKey: label)
-            } else {
-                let valueMirror:MirrorType = reflect(valueMaybe)
-                if valueMirror.count == 0 {
-                    result.setValue(nil, forKey: label)
+            for (labelMaybe, valueMaybe) in mirror.children {
+                
+                guard let label = labelMaybe else {
+                    continue
+                }
+                
+                if ["EntityName"].contains(label) {
+                    continue
+                }
+                
+                // FIXME: This still looks awful. Need to spend more time cleaning this up
+                if let value = valueMaybe as? Boxing {
+                    try value.box(result, withKey: label)
                 } else {
-                    // Since MirrorType has no typealias for it's children, we have to 
-                    // unpack the first one in order to identify them
-                    switch (valueMirror.count, valueMirror.disposition, valueMirror[0]) {
-                    case (_, .Optional, (_, let some)) where some.value is AnyObject:
-                        result.setValue(some.value as? AnyObject, forKey: label)
-                    case (_, .IndexContainer, (_, let some)) where some.value is Boxing:
-                        // Since valueMirror isn't an array type, we can't map over it or even properly extend it
-                        // Matching valueMaybe against [_Structured], on the other hand, doesn't work either
-                        var objects: [NSManagedObject] = []
-                        for c in 0..<valueMirror.count {
-                            if let value = valueMirror[c].1.value as? Boxing {
-                                objects.append(try toCoreData(context)(entity: value))
+                    let valueMirror:MirrorType = reflect(valueMaybe)
+                    if valueMirror.count == 0 {
+                        result.setValue(nil, forKey: label)
+                    } else {
+                        // Since MirrorType has no typealias for it's children, we have to 
+                        // unpack the first one in order to identify them
+                        switch (valueMirror.count, valueMirror.disposition, valueMirror[0]) {
+                        case (_, .Optional, (_, let some)) where some.value is AnyObject:
+                            result.setValue(some.value as? AnyObject, forKey: label)
+                        case (_, .IndexContainer, (_, let some)) where some.value is Boxing:
+                            // Since valueMirror isn't an array type, we can't map over it or even properly extend it
+                            // Matching valueMaybe against [_Structured], on the other hand, doesn't work either
+                            var objects: [NSManagedObject] = []
+                            for c in 0..<valueMirror.count {
+                                if let value = valueMirror[c].1.value as? Boxing {
+                                    objects.append(try value.toObject(context))
+                                }
                             }
+                            
+                            if objects.count > 0 {
+                                let mutableValue = result.mutableOrderedSetValueForKey(label)
+                                mutableValue.addObjectsFromArray(objects)
+                            }
+                            
+                        default:
+                            // If we end up here, we were unable to decode it
+                            throw NSManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
                         }
-                        
-                        if objects.count > 0 {
-                            let mutableValue = result.mutableOrderedSetValueForKey(label)
-                            mutableValue.addObjectsFromArray(objects)
-                        }
-                        
-                    default:
-                        // If we end up here, we were unable to decode it
-                        throw NSManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
                     }
                 }
             }
+            return result
         }
-        return result
+        throw NSManagedStructError.StructConversionError(message: "Object is no struct")
     }
-    throw NSManagedStructError.StructConversionError(message: "Object is no struct")
 }
 
 

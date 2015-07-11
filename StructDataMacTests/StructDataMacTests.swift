@@ -134,7 +134,7 @@ class StructDataMacTests: XCTestCase {
     override func setUp() {
         super.setUp()
         do {
-            self.nsEmployee1 = try toCoreData(self.context)(entity: self.employee1)
+            self.nsEmployee1 = try self.employee1.toObject(self.context)
         }catch NSManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
         } catch NSManagedStructError.StructValueError(let msg) {
@@ -144,9 +144,9 @@ class StructDataMacTests: XCTestCase {
             XCTAssert(false, "An Error Occured")
         }
         
-        self.nsEmployee2 = try! toCoreData(self.context)(entity: self.employee2)
+        self.nsEmployee2 = try! self.employee2.toObject(self.context)
         do {
-            self.nsShop = try toCoreData(self.context)(entity: self.shop)
+            self.nsShop = try self.shop.toObject(self.context)
         } catch NSManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
         } catch NSManagedStructError.StructValueError(let msg) {
@@ -157,7 +157,7 @@ class StructDataMacTests: XCTestCase {
         }
         
         do {
-            self.nsCompany = try toCoreData(self.context)(entity: self.company)
+            self.nsCompany = try self.company.toObject(self.context)
         } catch NSManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
         } catch NSManagedStructError.StructValueError(let msg) {
@@ -168,7 +168,7 @@ class StructDataMacTests: XCTestCase {
         }
         
         do {
-            self.nsOther = try toCoreData(self.context)(entity: self.other)
+            self.nsOther = try self.other.toObject(self.context)
         } catch NSManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
         } catch NSManagedStructError.StructValueError(let msg) {
@@ -186,7 +186,7 @@ class StructDataMacTests: XCTestCase {
     
     func testToCoreDataNonNil() {
         do {
-            let cd = try toCoreData(self.context)(entity: self.employee1)
+            let cd = try self.employee1.toObject(self.context)
             if (cd.valueForKey("name") as! String) != self.employee1.name {
                 XCTAssert(false, "Conversion failed: name")
             }
@@ -205,7 +205,7 @@ class StructDataMacTests: XCTestCase {
     
     func testToCoreDataNil() {
         do {
-            let cd = try toCoreData(self.context)(entity: self.employee2)
+            let cd = try self.employee2.toObject(self.context)
             if (cd.valueForKey("name") as! String) != self.employee2.name {
                 XCTAssert(false, "Conversion failed: name")
             }
@@ -252,7 +252,7 @@ class StructDataMacTests: XCTestCase {
     
     func testToCoreDataSub() {
         do {
-            let cd = try toCoreData(self.context)(entity: self.shop)
+            let cd = try self.shop.toObject(self.context)
             if (cd.valueForKey("name") as! String) != self.shop.name {
                 XCTAssert(false, "Conversion failed: name")
             }
@@ -283,7 +283,7 @@ class StructDataMacTests: XCTestCase {
     
     func testToCoreDataSubArray() {
         do {
-            let cd = try toCoreData(self.context)(entity: self.company)
+            let cd = try self.company.toObject(self.context)
             if (cd.valueForKey("name") as! String) != self.company.name {
                 XCTAssert(false, "Conversion failed: name")
             }
@@ -328,7 +328,8 @@ class StructDataMacTests: XCTestCase {
     
     func testOtherDataTypesToCoreData() {
         do {
-            let cd = try toCoreData(self.context)(entity: self.other)
+            let cd = try self.other.toObject(self.context)
+            
             if (cd.valueForKey("boolean") as! NSNumber).boolValue != self.other.boolean {
                 XCTAssert(false, "Conversion failed: boolean")
             }
