@@ -12,6 +12,15 @@
         <attribute name="position" optional="YES" attributeType="String" syncable="YES"/>
         <relationship name="company" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Company" syncable="YES"/>
     </entity>
+    <entity name="Other" syncable="YES">
+        <attribute name="boolean" optional="YES" attributeType="Boolean" syncable="YES"/>
+        <attribute name="data" optional="YES" attributeType="Binary" syncable="YES"/>
+        <attribute name="date" optional="YES" attributeType="Date" syncable="YES"/>
+        <attribute name="decimal" optional="YES" attributeType="Decimal" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="double" optional="YES" attributeType="Double" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="float" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
+        <attribute name="transformable" optional="YES" attributeType="Transformable" syncable="YES"/>
+    </entity>
     <entity name="Shop" syncable="YES">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
         <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" ordered="YES" destinationEntity="Employee" syncable="YES"/>
@@ -20,5 +29,6 @@
         <element name="Company" positionX="-54" positionY="36" width="128" height="75"/>
         <element name="Employee" positionX="-63" positionY="-18" width="128" height="135"/>
         <element name="Shop" positionX="-54" positionY="27" width="128" height="75"/>
+        <element name="Other" positionX="-54" positionY="36" width="128" height="30"/>
     </elements>
 </model>

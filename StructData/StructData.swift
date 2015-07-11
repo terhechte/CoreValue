@@ -256,6 +256,66 @@ extension Int16: Unboxing, Boxing {
     }
 }
 
+extension Int32: Unboxing, Boxing {
+    public static func unbox(value: AnyObject) -> Unboxed<Int32> {
+        switch value {
+        case let v as NSNumber: return Unboxed.Success(Int32(v.intValue))
+        default: return Unboxed.TypeMismatch("Int32")
+        }
+    }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(int: self), forKey: withKey)
+    }
+}
+
+extension Int64: Unboxing, Boxing {
+    public static func unbox(value: AnyObject) -> Unboxed<Int64> {
+        switch value {
+        case let v as NSNumber: return Unboxed.Success(Int64(v.longLongValue))
+        default: return Unboxed.TypeMismatch("Int64")
+        }
+    }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(longLong: self), forKey: withKey)
+    }
+}
+
+extension Double: Unboxing, Boxing {
+    public static func unbox(value: AnyObject) -> Unboxed<Double> {
+        switch value {
+        case let v as NSNumber: return Unboxed.Success(v.doubleValue)
+        default: return Unboxed.TypeMismatch("Double")
+        }
+    }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(double: self), forKey: withKey)
+    }
+}
+
+extension Float: Unboxing, Boxing {
+    public static func unbox(value: AnyObject) -> Unboxed<Float> {
+        switch value {
+        case let v as NSNumber: return Unboxed.Success(v.floatValue)
+        default: return Unboxed.TypeMismatch("Float")
+        }
+    }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(float: self), forKey: withKey)
+    }
+}
+
+extension Bool: Unboxing, Boxing {
+    public static func unbox(value: AnyObject) -> Unboxed<Bool> {
+        switch value {
+        case let v as NSNumber: return Unboxed.Success(v.boolValue)
+        default: return Unboxed.TypeMismatch("Boolean")
+        }
+    }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(bool: self), forKey: withKey)
+    }
+}
+
 extension String: Unboxing, Boxing {
     public static func unbox(value: AnyObject) -> Unboxed<String> {
         switch value {
@@ -268,19 +328,42 @@ extension String: Unboxing, Boxing {
     }
 }
 
-// FIXME: Int32, Int64, Double, Float, Boolean, NSDate, NSData, NSValue
-/*
-            case let k as Int32:
-                result.setValue(NSNumber(int: k), forKey: label)
-            case let k as Int64:
-                result.setValue(NSNumber(longLong: k), forKey: label)
-            case let k as Double:
-                result.setValue(NSNumber(double: k), forKey: label)
-            case let k as Float:
-                result.setValue(NSNumber(float: k), forKey: label)
-            case let k as Boolean:
-                result.setValue(NSNumber(unsignedChar: k), forKey: label)
-*/
+extension NSData: Unboxing, Boxing {
+    public static func unbox(value: AnyObject) -> Unboxed<NSData> {
+        if let s = value as? NSData {
+            return Unboxed.Success(s)
+        }
+        return Unboxed.TypeMismatch("NSData")
+    }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(self, forKey: withKey)
+    }
+}
+
+extension NSDate: Unboxing, Boxing {
+    public static func unbox(value: AnyObject) -> Unboxed<NSDate> {
+        if let s = value as? NSDate {
+            return Unboxed.Success(s)
+        }
+        return Unboxed.TypeMismatch("NSDate")
+    }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(self, forKey: withKey)
+    }
+}
+
+extension NSDecimalNumber: Unboxing, Boxing {
+    public static func unbox(value: AnyObject) -> Unboxed<NSDecimalNumber> {
+        if let s = value as? NSDecimalNumber {
+            return Unboxed.Success(s)
+        }
+        return Unboxed.TypeMismatch("NSDecimalNumber")
+    }
+    public func box(object: NSManagedObject, withKey: String) throws {
+        object.setValue(self, forKey: withKey)
+    }
+}
+
 
 /**
 This error will be thrown if boxing fails because the core data model

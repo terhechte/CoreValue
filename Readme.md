@@ -17,7 +17,10 @@ This is a framework to use core data with struct models instead of NSObject-base
 - [ ] add iOS target
 - [ ] make the managed object context optional
 - [ ] move the toCoreData into the boxing protocol and fill it with a protocol extension
-- [ ] add support for nsset
+- [ ] add support for nsset / unordered lists
+- [ ] add support for fetched properties
+- [ ] test with let instead of var types
+- [ ] support transformable: https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/CoreData/Articles/cdNSAttributes.html
 
 ### Proposed Operator renaming
 In order to improve the readability and understandability of the operators, the following

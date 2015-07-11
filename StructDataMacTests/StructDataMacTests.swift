@@ -55,6 +55,27 @@ struct Company: NSManagedStruct {
     }
 }
 
+struct Other: NSManagedStruct {
+    let EntityName = "Other"
+    
+    var boolean: Bool
+    var data: NSData
+    var date: NSDate
+    var decimal: NSDecimalNumber
+    var double: Double
+    var float: Float
+    
+    static func fromObject(o: NSManagedObject) -> Unboxed<Other> {
+        return curry(self.init)
+        <^> o <| "boolean"
+        <*> o <| "data"
+        <*> o <| "date"
+        <*> o <| "decimal"
+        <*> o <| "double"
+        <*> o <| "float"
+    }
+}
+
 func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext? {
     let b = NSBundle(forClass: cls)
     let modelURL = b.URLForResource("StructDataMacTests", withExtension: "mom")!
@@ -104,6 +125,12 @@ class StructDataMacTests: XCTestCase {
     
     var nsCompany: NSManagedObject!
     
+    let other = {
+        return Other(boolean: true, data: NSData(), date: NSDate(), decimal: NSDecimalNumber(), double: 10, float: 20)
+    }()
+    
+    var nsOther: NSManagedObject!
+    
     override func setUp() {
         super.setUp()
         do {
@@ -131,6 +158,17 @@ class StructDataMacTests: XCTestCase {
         
         do {
             self.nsCompany = try toCoreData(self.context)(entity: self.company)
+        } catch NSManagedStructError.StructConversionError(let msg) {
+            XCTAssert(false, msg)
+        } catch NSManagedStructError.StructValueError(let msg) {
+            XCTAssert(false, msg)
+        } catch let e {
+            print(e)
+            XCTAssert(false, "An Error Occured")
+        }
+        
+        do {
+            self.nsOther = try toCoreData(self.context)(entity: self.other)
         } catch NSManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
         } catch NSManagedStructError.StructValueError(let msg) {
@@ -285,6 +323,43 @@ class StructDataMacTests: XCTestCase {
             }
         case .TypeMismatch(let msg):
             XCTAssert(false, msg)
+        }
+    }
+    
+    func testOtherDataTypesToCoreData() {
+        do {
+            let cd = try toCoreData(self.context)(entity: self.other)
+            if (cd.valueForKey("boolean") as! NSNumber).boolValue != self.other.boolean {
+                XCTAssert(false, "Conversion failed: boolean")
+            }
+            
+            guard cd.valueForKey("data") is NSData else {
+                XCTAssert(false, "Conversion failed: nsdata")
+                return
+            }
+            
+            guard cd.valueForKey("date") is NSDate else {
+                XCTAssert(false, "Conversion failed: nsdate")
+                return
+            }
+            
+            guard cd.valueForKey("decimal") is NSDecimalNumber else {
+                XCTAssert(false, "Conversion failed: decimal")
+                return
+            }
+            
+            guard cd.valueForKey("double") is NSNumber else {
+                XCTAssert(false, "Conversion failed: double")
+                return
+            }
+            
+        } catch NSManagedStructError.StructConversionError(let msg) {
+            XCTAssert(false, msg)
+        } catch NSManagedStructError.StructValueError(let msg) {
+            XCTAssert(false, msg)
+        } catch let e {
+            print(e)
+            XCTAssert(false, "An Error Occured")
         }
     }
     
