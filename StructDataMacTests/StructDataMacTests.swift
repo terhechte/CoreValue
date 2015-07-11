@@ -12,11 +12,11 @@ struct Employee : NSManagedStruct { //, Structured
     
     let EntityName = "Employee"
     
-    var name: String
-    var age: Int16
-    var position: String?
-    var department: String
-    var job: String
+    let name: String
+    let age: Int16
+    let position: String?
+    let department: String
+    let job: String
     
     // FIXME: Relationship support
     static func fromObject(o: NSManagedObject) -> Unboxed<Employee> {
