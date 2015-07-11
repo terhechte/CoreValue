@@ -8,9 +8,9 @@
 
 import XCTest
 
-struct Employee : NSManagedStruct { //, Structured
+struct Employee : NSManagedStruct {
     
-    let EntityName = "Employee"
+    static let EntityName = "Employee"
     
     let name: String
     let age: Int16
@@ -18,7 +18,6 @@ struct Employee : NSManagedStruct { //, Structured
     let department: String
     let job: String
     
-    // FIXME: Relationship support
     static func fromObject(o: NSManagedObject) -> Unboxed<Employee> {
         return curry(self.init)
             <^> o <| "name"
@@ -30,7 +29,7 @@ struct Employee : NSManagedStruct { //, Structured
 }
 
 struct Shop: NSManagedStruct {
-    let EntityName = "Shop"
+    static let EntityName = "Shop"
     
     var name: String
     var owner: Employee
@@ -43,7 +42,7 @@ struct Shop: NSManagedStruct {
 }
 
 struct Company: NSManagedStruct {
-    let EntityName = "Company"
+    static let EntityName = "Company"
     
     var name: String
     var employees: Array<Employee>
@@ -56,7 +55,7 @@ struct Company: NSManagedStruct {
 }
 
 struct Other: NSManagedStruct {
-    let EntityName = "Other"
+    static let EntityName = "Other"
     
     var boolean: Bool
     var data: NSData
@@ -363,5 +362,58 @@ class StructDataMacTests: XCTestCase {
             XCTAssert(false, "An Error Occured")
         }
     }
+}
+
+
+class StructDataQueryTests: XCTestCase {
     
+    var context: NSManagedObjectContext = {
+        return setUpInMemoryManagedObjectContext(StructDataMacTests)!
+    }()
+    
+    var manyEmployees: [NSManagedObject] = []
+    
+    override func setUp() {
+        super.setUp()
+        for n in 0..<50 {
+            let employee = Employee(name: "employee \(n)", age: n + 10, position: nil, department: "", job: "")
+            do {
+                manyEmployees.append(try employee.toObject(self.context))
+            } catch let e {
+                print(e)
+                XCTAssert(false, "An Error Occured")
+            }
+        }
+    }
+    
+    func testQueryYoungOnes() {
+        let predicate = NSPredicate(format: "age > 10 and age < 12", argumentArray: nil)
+        // Important, the results: [Employee] is required for the type checker to figure things out
+        let results: [Employee] = Employee.query(self.context, predicate: predicate)
+        if results.count != 1 {
+            XCTAssert(false, "Wrong amount for you ones \(results.count)")
+        }
+    }
+    
+    func testQueryOldOnes() {
+        let predicate = NSPredicate(format: "age > 50", argumentArray: nil)
+        // Important, the results: [Employee] is required for the type checker to figure things out
+        let results: [Employee] = Employee.query(self.context, predicate: predicate)
+        if results.count != 9 {
+            XCTAssert(false, "Wrong amount for old ones \(results.count)")
+        }
+    }
+    
+    func testQueryOrder() {
+        // Important, the results: [Employee] is required for the type checker to figure things out
+        let descriptors: [NSSortDescriptor] = [NSSortDescriptor(key: "age", ascending: false)]
+        let results: [Employee] = Employee.query(self.context, predicate: nil, sortDescriptors: descriptors)
+        if let r = results.first {
+            if r.age != 59 {
+                XCTAssert(false, "wrong employee age: \(r.age)")
+            }
+        } else {
+            XCTAssert(false, "Wrong query amount result: 0")
+        }
+    }
 }

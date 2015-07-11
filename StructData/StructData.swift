@@ -9,7 +9,6 @@
 import Foundation
 import CoreData
 
-// MARK: -
 // MARK: Unboxing
 
 /**
@@ -23,8 +22,6 @@ Unboxing NSManagedObjects into Value types.
 - Unboxing defines the 'Unboxing' protocol which a type has to conform to in order to be able
   to be unboxed
 */
-
-// MARK: Custom Operators
 
 // monadic operators
 infix operator <^> { associativity left precedence 130 }
@@ -63,8 +60,6 @@ public func <|| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObje
     }
     return Unboxed.TypeMismatch("\(key) \(A.self)")
 }
-
-// MARK: Types
 
 /**
 Each Unboxing operation returns this either type which allows unboxing to fail
@@ -133,7 +128,7 @@ Boxing value types into NSManagedObject instances
 
 public protocol Boxing {
     /** The name of the Core Data entity that the boxed value type should become */
-    var EntityName: String {get}
+    static var EntityName: String {get}
     /** Box Self into the given managed object with key *withKey*
     - parameter object: The NSManagedObject that the value type self should be boxed into
     - parameter withKey: The name of the property in the NSManagedObject that it should be written to
@@ -160,8 +155,11 @@ EntityName. Thus, by default the EntityName is the empty string
 FIXME: Consider just making EntityName optional
 */
 public extension Boxing {
-    var EntityName: String { return "" }
+    static var EntityName: String { return "" }
 }
+
+// MARK: -
+// MARK: NSManagedStruct
 
 /**
 The NSManagedStruct protocol is only for high level struct value types that should be
@@ -179,23 +177,73 @@ public protocol NSManagedStruct : Boxing, Unboxing {
     - parameter object: The NSManagedObject that should be converted to an instance of self
     */
     static func fromObject(object: NSManagedObject) -> Unboxed<Self>
-    
 }
 
 /**
 NSManagedStruct already contains implementations for unbox and box
 */
 extension NSManagedStruct {
-    static func unbox<A: NSManagedStruct where A==A.StructureType>(value: AnyObject) -> Unboxed<A> {
+    public static func unbox<A: NSManagedStruct where A==A.StructureType>(value: AnyObject) -> Unboxed<A> {
         if let v = value as? NSManagedObject {
             return A.fromObject(v)
         }
         return Unboxed.TypeMismatch("\(value) is not NSManagedObject")
     }
-    func box(object: NSManagedObject, withKey: String) throws {
+    public func box(object: NSManagedObject, withKey: String) throws {
         try object.setValue(self.toObject(object.managedObjectContext), forKey: withKey)
     }
 }
+
+// MARK: Querying
+
+/**
+NSManagedStruct extensions for querying CoreData with predicates
+
+- There's certainly a lot of low hanging fruit here to be implemented, such as a better way of querying, 
+  i.e. a more type safe NSPredicate
+- Or a more type safe way of describing order.
+
+For a first release, this should do though.
+*/
+extension NSManagedStruct {
+    
+    public static func query<T: NSManagedStruct>(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: Array<NSSortDescriptor>) -> Array<T> {
+        let fetchRequest = NSFetchRequest(entityName: self.EntityName)
+        
+        fetchRequest.sortDescriptors = sortDescriptors
+        
+        if let p = predicate {
+            fetchRequest.predicate = p
+        }
+        
+        do {
+            let fetchResults = try context.executeFetchRequest(fetchRequest)
+            var results: [T] = []
+            for result in fetchResults {
+                if let result = result as? NSManagedObject {
+                    let value = T.fromObject(result)
+                    if let unboxedValue = value.value {
+                        results.append(unboxedValue)
+                    }
+                }
+            }
+            return results
+        } catch _ {
+            return []
+        }
+    }
+    
+    public static func query<T: NSManagedStruct>(context: NSManagedObjectContext, predicate: NSPredicate?) -> Array<T> {
+        return self.query(context, predicate: predicate, sortDescriptors: Array<NSSortDescriptor>())
+    }
+}
+
+// MARK: -
+// MARK: Type Extensions
+
+// Extending existing value types to support Boxing and Unboxing
+// For all types that core data supports
+
 
 /**
 NSManagedObject already contains implementations for unbox and box
@@ -236,12 +284,6 @@ extension Array where T: Unboxing, T == T.StructureType {
         }
     }
 }
-
-// MARK: -
-// MARK: Type Extensions
-
-// Extending existing value types to support Boxing and Unboxing
-// For all types that core data supports
 
 extension Int: Unboxing, Boxing {
     public static func unbox(value: AnyObject) -> Unboxed<Int> {
@@ -375,6 +417,8 @@ extension NSDecimalNumber: Unboxing, Boxing {
     }
 }
 
+// MARK: -
+// MARK: Reflection Support
 
 /**
 This error will be thrown if boxing fails because the core data model
@@ -399,9 +443,9 @@ extension Boxing {
             // FIXME: only create an entity, if it doesn't exist yet, otherwise update it
             
             // try to create an entity
-            let desc = NSEntityDescription.entityForName(self.EntityName, inManagedObjectContext:(context ?? nil)!)
+            let desc = NSEntityDescription.entityForName(self.dynamicType.EntityName, inManagedObjectContext:(context ?? nil)!)
             guard let _ = desc else {
-                fatalError("Entity \(self.EntityName) not found in Core Data Model")
+                fatalError("Entity \(self.dynamicType.EntityName) not found in Core Data Model")
             }
             
             let result = NSManagedObject(entity: desc!, insertIntoManagedObjectContext: context)
@@ -409,10 +453,6 @@ extension Boxing {
             for (labelMaybe, valueMaybe) in mirror.children {
                 
                 guard let label = labelMaybe else {
-                    continue
-                }
-                
-                if ["EntityName"].contains(label) {
                     continue
                 }
                 
@@ -453,7 +493,7 @@ extension Boxing {
             }
             return result
         }
-        throw NSManagedStructError.StructConversionError(message: "Object is no struct")
+        throw NSManagedStructError.StructConversionError(message: "Object is not a struct")
     }
 }
 
