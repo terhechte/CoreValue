@@ -253,6 +253,9 @@ class StructDataMacTests: XCTestCase {
             if ((cd.valueForKey("employees")?.firstObject?!.valueForKey("name") as! String) != self.company.employees[0].name) {
                 XCTAssert(false, "Conversion failed: employee's name")
             }
+            if ((cd.valueForKey("employees")?.lastObject?!.valueForKey("name") as! String) != self.company.employees.last?.name) {
+                XCTAssert(false, "Conversion failed: employee's order")
+            }
             if let ab:NSOrderedSet = cd.valueForKey("employees") as? NSOrderedSet {
                 if ab.count != self.company.employees.count {
                     XCTAssert(false, "Did not box all employees")
@@ -277,6 +280,9 @@ class StructDataMacTests: XCTestCase {
             }
             if t.employees.count != self.company.employees.count {
                 XCTAssert(false, "Wrong amount of employees")
+            }
+            if t.employees.last?.name != self.company.employees.last?.name {
+                XCTAssert(false, "Wrong Employee order")
             }
         case .TypeMismatch(let msg):
             XCTAssert(false, msg)
