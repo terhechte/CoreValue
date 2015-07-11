@@ -58,26 +58,10 @@ public protocol Boxing {
     func box(object: NSManagedObject, withKey: String) throws
 }
 
-/**
-We need the _Structured protocol as a way to decode NSManagedStruct instances in NSManagedStructs.
-We can't use NSManagedStruct for this, as it has a self requirement
-
-FIXME: Use protocol composition for this...
-typealias comm = protocol<_Structured, Equatable>
-
-*/
 public extension Boxing {
     var EntityName: String { return "" }
 }
 
-
-/**
-This abonimation exists so that the user only has to conform to one protocol in order to support
-structdata. The code here would be a tad cleaner if we'd require the user to conform to two
-protocols, however one of them would be empty, so I suppose it's for the better to do it this way
-FIXME: Think about this some more and try to find a way to do this without this weird protocol
-setup and extension mess
-*/
 public protocol Unboxing {
     typealias StructureType = Self
     static func unbox(value: AnyObject) -> Unboxed<StructureType>
@@ -137,25 +121,14 @@ extension NSManagedObject: Unboxing, Boxing {
     }
 }
 
-/*
-all other approaches (see above) are impossible (i.e. strict protocol conformance via :Structured
-because there is no way to satisfy the typechecker that
-public static func unbox(value: AnyObject) -> Unboxed<StructureType>
-is the same as
-public static func unbox(value: AnyObject) -> Unboxed<[StructureType]>
-the only way that seemed plausible to me was
-typealias StructureType = [T]
-public static func unbox(value: AnyObject) -> Unboxed<StructureType>
-but that crashes the compiler
-*/
-
 extension Array where T: Unboxing, T == T.StructureType {
     public static func unbox(value: AnyObject) -> Unboxed<[T]> {
         switch value {
         case let orderedSet as NSOrderedSet:
             var container: [T] = []
             // Each entry has to be unboxed seperately and then the unboxed
-            // value will be in an 'Unboxed' array. Also, unboxing may always fail
+            // value will be in an 'Unboxed' array. Also, unboxing may always fail,
+            // which is why we have to check it via an if let
             for boxedEntry in orderedSet {
                 if let value = T.unbox(boxedEntry).value {
                     container.append(value)
@@ -250,27 +223,20 @@ public func toCoreData(context: NSManagedObjectContext)(entity: Boxing) throws -
                 continue
             }
             
-            print (label)
-            
             // FIXME: This still looks awful. Need to spend more time cleaning this up
             if let value = valueMaybe as? Boxing {
-                print("boxing")
                 try value.box(result, withKey: label)
             } else {
-                print("mirror")
                 let valueMirror:MirrorType = reflect(valueMaybe)
                 if valueMirror.count == 0 {
-                    print("count=0")
                     result.setValue(nil, forKey: label)
                 } else {
                     // Since MirrorType has no typealias for it's children, we have to 
                     // unpack the first one in order to identify them
                     switch (valueMirror.count, valueMirror.disposition, valueMirror[0]) {
                     case (_, .Optional, (_, let some)) where some.value is AnyObject:
-                        print("optional")
                         result.setValue(some.value as? AnyObject, forKey: label)
                     case (_, .IndexContainer, (_, let some)) where some.value is Boxing:
-                        print("index contianer")
                         // Since valueMirror isn't an array type, we can't map over it or even properly extend it
                         // Matching valueMaybe against [_Structured], on the other hand, doesn't work either
                         var objects: [NSManagedObject] = []
@@ -286,15 +252,12 @@ public func toCoreData(context: NSManagedObjectContext)(entity: Boxing) throws -
                         }
                         
                     default:
-                        print("default")
                         // If we end up here, we were unable to decode it
                         throw NSManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
                     }
                 }
             }
-            
         }
-        
         return result
     }
     throw NSManagedStructError.StructConversionError(message: "Object is no struct")

@@ -246,7 +246,6 @@ class StructDataMacTests: XCTestCase {
     func testToCoreDataSubArray() {
         do {
             let cd = try toCoreData(self.context)(entity: self.company)
-            print("cd is", cd)
             if (cd.valueForKey("name") as! String) != self.company.name {
                 XCTAssert(false, "Conversion failed: name")
             }
