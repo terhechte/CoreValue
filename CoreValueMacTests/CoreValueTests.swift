@@ -7,6 +7,7 @@
 //
 
 import XCTest
+import CoreData
 
 struct Employee : NSManagedStruct {
     
@@ -92,7 +93,7 @@ struct StoredShop: NSManagedPersistentStruct {
 
 func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext? {
     let b = NSBundle(forClass: cls)
-    let modelURL = b.URLForResource("CoreValueMacTests", withExtension: "mom")!
+    let modelURL = b.URLForResource("CoreValueTests", withExtension: "mom")!
     let managedObjectModel = NSManagedObjectModel(contentsOfURL: modelURL)!
     
     let persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
