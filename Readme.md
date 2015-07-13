@@ -18,28 +18,6 @@ NSManagedObject -> ValueType
 - [ ] add support for nsset / unordered lists
 - [ ] add support for fetched properties (could be a struct a la (objects, predicate))
 - [ ] support transformable: https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/CoreData/Articles/cdNSAttributes.html
-### Proposed Operator renaming
-In order to improve the readability and understandability of the operators, the following
-```
-        return curry(self.init)
-            <^> o <| "name"
-            <*> o <| "age"
-            <*> o <|? "position"
-            <*> o <| "department"
-            <*> o <| "job"
-            <*> o <|| "company"
-```
-
-should be changed to
-```
-        return newObject(self.init) with
-             value "name" from o
-             value "age" from o
-             optional "position" from o
-             value "department" from o
-             value "job" from o
-             object "company" from o
-```
 
 ### Done Tasks
 - [x] Add query methods to query from core data straight into structs
