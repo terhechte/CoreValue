@@ -239,9 +239,9 @@ extension UnboxingStruct {
 /**
 Type aliases for boxing/unboxing support, and the same for persistence
 */
-typealias NSManagedStruct = protocol<BoxingStruct, UnboxingStruct>
+public typealias NSManagedStruct = protocol<BoxingStruct, UnboxingStruct>
 
-typealias NSManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
+public typealias NSManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
 
 // MARK: Querying
 
@@ -304,6 +304,7 @@ extension NSManagedObject: Unboxing, Boxing {
         object.setValue(self, forKey: withKey)
     }
 }
+
 extension NSManagedObjectID: Unboxing, Boxing {
     public static func unbox(value: AnyObject) -> Unboxed<NSManagedObjectID> {
         return Unboxed.Success(value as! NSManagedObjectID)

@@ -18,6 +18,7 @@ NSManagedObject -> ValueType
 - [ ] add support for fetched properties (could be a struct a la (objects, predicate))
 - [ ] support transformable: https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/CoreData/Articles/cdNSAttributes.html
 - [ ] add jazzy for docs and update headers to have proper docs
+- [ ] create a first release (.1)
 
 ### Done Tasks
 - [x] Add query methods to query from core data straight into structs

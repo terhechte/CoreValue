@@ -33,14 +33,14 @@
 			containerPortal = 4D59124F1B4989FB0022506E /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 4D5912571B4989FB0022506E;
-			remoteInfo = StructData;
+			remoteInfo = CoreValue;
 		};
 		4D59128C1B498AFA0022506E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4D59124F1B4989FB0022506E /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 4D5912801B498AF90022506E;
-			remoteInfo = StructDataMac;
+			remoteInfo = CoreValueMac;
 		};
 /* End PBXContainerItemProxy section */
 
