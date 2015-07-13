@@ -87,9 +87,11 @@ That's it. Everything else it automated from here. Here're some examples of what
 There're two ways of querying objects from Core Data into values:
 
 ``` Swift
-public static func query<T: UnboxingStruct>(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: Array<NSSortDescriptor>) -> Array<T>
+// With Sort Descriptors
+public static func query(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: Array<NSSortDescriptor>) -> Array
     
-public static func query<T: UnboxingStruct>(context: NSManagedObjectContext, predicate: NSPredicate?) -> Array<T>
+// Without sort descriptors
+public static func query(context: NSManagedObjectContext, predicate: NSPredicate?) -> Array
 
 ```
 
@@ -100,92 +102,6 @@ If no NSPredicate is given, all objects for the selected Entity are returned.
 `NSManagedPersistentStruct` is a type alias for the two primary protocols of CoreValue: `BoxingPersistentStruct`, `UnboxingStruct`.
 
 Let's see what they do.
-
-### UnboxingStruct
-
-In CoreValue, `boxed` refers to values in an NSManagedObject container. I.e. NSNumber is boxing an Int, NSOrderedSet an Array, and NSManagedObject itself is boxing a value type (i.e. `Shop`).
-
-`UnboxingStruct` can be applied to any struct or class that you intend to initialize from a NSManagedObject. It only has one requirement that needs to be implemented, and that's `fromObject` which takes a NSManagedObject and should return a value type. Here's a very simple and unsafe example:
-
-``` Swift
-struct Counter : UnboxingStruct
-	var count: Int
-	let name: String
-	static func fromObject(object: NSManagedObject) -> Unboxed<Counter> {
-		return Unboxed.Success(Counter(count: object.valueForKey("count")!.integerValue, name: object.valueForKey("name")!))
-	}
-}
-```
-
-Even though this example is not safe, we can observe several things from it. First, the implementation overhead is minimal. Second, we're not returning a Counter value, but instead the `Unboxed<Counter>` enum. That's because unboxing can fail in a multitude of ways (wrong value, no value, wrong entity, unknown entity, etc). If unboxing fails in any way, we should return `Unboxed.TypeMismatch(...)`. The other benefit of using `Unboxed` is, that it allows us to take an unboxing shortcut (which CoreValue deviously copied from [Argo](https://github.com/thoughtbot/Argo)). Utilizing several custom operators, the unboxing process can be greatly simplified:
-
-``` Swift
-struct Counter : UnboxingStruct
-	var count: Int
-	let name: String
-	static func fromObject(object: NSManagedObject) -> Unboxed<Counter> {
-		return curry(self.init) <^> object <| "count" <*> object <| "name"
-	}
-}
-```
-
-This code takes the automatic initializer, curries it and maps it over multiple incarnations of unboxing functions (`<|`) until it can return a Unboxed<Counter>. As a very neat side effect, if any of the unboxing operations fail, it will automatically return `Unboxed.TypeMismatch` and tell you specifically which decoding failed. Even better, all this is type checked, so if you accidentally try to decode an optional value into an array, the type checker will note it.
-
-But what about these weird runes? Here's an in-detail overview of what's happening here:
-
-#### Unboxing in Detail
-
-`curry(self.init)`
-
-Convert `(A, B) -> T` into `A -> B -> C` so that it can be called step by step
-
-`<^>`
-Map the following operations over the `A -> B -> fn` that we just created
-
-`object <| "count"`
-First operation: Take `object`, call `valueForKey` with the key `"count"` and assign this as the value for the first type of the curryed init function `A`
-
-`<*>`
-Apply on the curried self.init
-
-`object <| "name"`
-Second operation: Take `object`, call `valueForKey` with the key `"count"` and assign this as the value for the second type of the curryed init function `B`
-
-#### Other Operators
-
-`<|` is not the only operator needed to encode objects. Here's a list of all supported operators:
-
-           Operator                     | Description
-:-----:|----------------------------------------------------------
-! <^>  |  Map the following operations (always has to be the first op)
-! <*>  |  Apply on the fn (use this to combine operations)
-! <    |  Unbox a normal value (i.e. var shop: Shop)
-! <||  |  Unbox a set/list of values (i.e. var shops: [Shops])
-! <|?  |  Unbox an optional value (i.e. var shop: Shop?)
-
-### Unboxed
-
-Finally, the Unboxed enum looks like this:
-
-``` Swift
-public enum Unboxed<T> {
-    case Success(T)
-    case TypeMismatch(String)
-    
-    public var value: T?
-    }
-```
-
-You can pattern match for `.Success`, or try to unwrap `value` in order to retrieve the actually unboxed value type:
-
-``` Swift
-switch Shop.fromObject(managedObject) {
-  case .Success(let value):
-    print(value.name)
-  case .TypeMismatch(let error):
-    print(error)
-}
-```
 
 ### BoxingPersistentStruct
 
@@ -253,12 +169,99 @@ Then ***you have to make sure*** that all value types conform to the same boxing
 Most protocols in CoreValue mark the NSManagedObjectContext as an optional, which means that you don't have to supply it. Boxing will still work as expected, only the resulting NSManagedObjects will be ephemeral, that is, they're not bound to a context, they can't be stored. There're few use cases for this, but it is important to note that not supplying a NSManagedObjectContext will not result in an error.
 
 
+### UnboxingStruct
+
+In CoreValue, `boxed` refers to values in an NSManagedObject container. I.e. NSNumber is boxing an Int, NSOrderedSet an Array, and NSManagedObject itself is boxing a value type (i.e. `Shop`).
+
+`UnboxingStruct` can be applied to any struct or class that you intend to initialize from a NSManagedObject. It only has one requirement that needs to be implemented, and that's `fromObject` which takes a NSManagedObject and should return a value type. Here's a very simple and unsafe example:
+
+``` Swift
+struct Counter : UnboxingStruct
+	var count: Int
+	let name: String
+	static func fromObject(object: NSManagedObject) -> Unboxed<Counter> {
+		return Unboxed.Success(Counter(count: object.valueForKey("count")!.integerValue, name: object.valueForKey("name")!))
+	}
+}
+```
+
+Even though this example is not safe, we can observe several things from it. First, the implementation overhead is minimal. Second, we're not returning a Counter value, but instead the `Unboxed<Counter>` enum. That's because unboxing can fail in a multitude of ways (wrong value, no value, wrong entity, unknown entity, etc). If unboxing fails in any way, we should return `Unboxed.TypeMismatch(...)`. The other benefit of using `Unboxed` is, that it allows us to take an unboxing shortcut (which CoreValue deviously copied from [Argo](https://github.com/thoughtbot/Argo)). Utilizing several custom operators, the unboxing process can be greatly simplified:
+
+``` Swift
+struct Counter : UnboxingStruct
+	var count: Int
+	let name: String
+	static func fromObject(object: NSManagedObject) -> Unboxed<Counter> {
+		return curry(self.init) <^> object <| "count" <*> object <| "name"
+	}
+}
+```
+
+This code takes the automatic initializer, curries it and maps it over multiple incarnations of unboxing functions (`<|`) until it can return a Unboxed<Counter>. As a very neat side effect, if any of the unboxing operations fail, it will automatically return `Unboxed.TypeMismatch` and tell you specifically which decoding failed. Even better, all this is type checked, so if you accidentally try to decode an optional value into an array, the type checker will note it.
+
+But what about these weird runes? Here's an in-detail overview of what's happening here:
+
+#### Unboxing in Detail
+
+`curry(self.init)`
+
+Convert `(A, B) -> T` into `A -> B -> C` so that it can be called step by step
+
+`<^>`
+Map the following operations over the `A -> B -> fn` that we just created
+
+`object <| "count"`
+First operation: Take `object`, call `valueForKey` with the key `"count"` and assign this as the value for the first type of the curryed init function `A`
+
+`<*>`
+Apply on the curried self.init
+
+`object <| "name"`
+Second operation: Take `object`, call `valueForKey` with the key `"count"` and assign this as the value for the second type of the curryed init function `B`
+
+#### Other Operators
+
+`<|` is not the only operator needed to encode objects. Here's a list of all supported operators:
+
+           Operator                     | Description
+:-----:|----------------------------------------------------------
+ <^>   |  Map the following operations (always has to be the first op)
+ <*>   |  Apply on the fn (use this to combine operations)
+ <\|   |  Unbox a normal value (i.e. var shop: Shop)
+ <\|\| |  Unbox a set/list of values (i.e. var shops: [Shops])
+ <\|?  |  Unbox an optional value (i.e. var shop: Shop?)
+
+### Unboxed
+
+Finally, the Unboxed enum looks like this:
+
+``` Swift
+public enum Unboxed<T> {
+    case Success(T)
+    case TypeMismatch(String)
+    
+    public var value: T?
+    }
+```
+
+You can pattern match for `.Success`, or try to unwrap `value` in order to retrieve the actually unboxed value type:
+
+``` Swift
+switch Shop.fromObject(managedObject) {
+  case .Success(let value):
+    print(value.name)
+  case .TypeMismatch(let error):
+    print(error)
+}
+```
+
+
 ### NSManagedStruct
 
 Since most of the time you probably want boxing and unboxing functionality, CoreValue includes two handy type aliases, `NSManagedStruct` and `NSManagedPersistentStruct` which contain Boxing and Unboxing in one type.
 
 ## Docs
-(Coming, have a look at CoreValue.swift, it's full of docstrings)
+(Coming, have a look at [CoreValue.swift](https://github.com/terhechte/CoreValue/blob/master/CoreValue/CoreValue.swift), it's full of docstrings)
 
 ## State
 
@@ -291,7 +294,7 @@ for up to date installation instructions.
 The `import CoreValue` directive is required in order to use CoreValue.
 
 
-### [Manually]
+### Manually
 
 1. Copy the CoreValue.swift and curry.swift file into your project.
 2. Add the `Core Data` framework to your project
