@@ -1,4 +1,4 @@
-## StructData
+## CoreValue
 ### Lightweight Framework for using Core Data with Value Types
 
 > Status, in Development
@@ -11,7 +11,6 @@ NSManagedObject -> ValueType
 
 ### Todo
 - [ ] add support for optional array types ([Employee]?)
-- [ ] think about renaming to CoreValue / NSManagedValue
 - [ ] add iOS target
 - [ ] add carthage support (sharing scheme, testing it)
 - [ ] add travis build
@@ -34,3 +33,4 @@ NSManagedObject -> ValueType
       currently the complexity of understanding the mutatingToObject and toObject behaviour with all it's side effects is too high
 - [x] figure out the best way of  saving (i.e. NSManagedStruct save function that converts to nsmanagedobject and saves on the context?)
       so that one doesn't need to call toObject every time the value type changed...
+- [x] think about renaming to CoreValue / NSManagedValue

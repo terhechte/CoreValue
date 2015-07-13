@@ -1,6 +1,6 @@
 //
-//  StructDataTests.swift
-//  StructDataTests
+//  CoreValueTests.swift
+//  CoreValueTests
 //
 //  Created by Benedikt Terhechte on 05/07/15.
 //  Copyright © 2015 Benedikt Terhechte. All rights reserved.
@@ -8,7 +8,7 @@
 
 import XCTest
 
-class StructDataTests: XCTestCase {
+class CoreValueTests: XCTestCase {
     
     override func setUp() {
         super.setUp()

@@ -1,6 +1,6 @@
 //
-//  StructDataMacTests.swift
-//  StructDataMacTests
+//  CoreValueMacTests.swift
+//  CoreValueMacTests
 //
 //  Created by Benedikt Terhechte on 05/07/15.
 //  Copyright © 2015 Benedikt Terhechte. All rights reserved.
@@ -92,7 +92,7 @@ struct StoredShop: NSManagedPersistentStruct {
 
 func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext? {
     let b = NSBundle(forClass: cls)
-    let modelURL = b.URLForResource("StructDataMacTests", withExtension: "mom")!
+    let modelURL = b.URLForResource("CoreValueMacTests", withExtension: "mom")!
     let managedObjectModel = NSManagedObjectModel(contentsOfURL: modelURL)!
     
     let persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
@@ -109,10 +109,10 @@ func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext?
 }
 
 
-class StructDataMacTests: XCTestCase {
+class CoreValueMacTests: XCTestCase {
     
     var context: NSManagedObjectContext = {
-        return setUpInMemoryManagedObjectContext(StructDataMacTests)!
+        return setUpInMemoryManagedObjectContext(CoreValueMacTests)!
     }()
     
     let employee1 = {
@@ -380,10 +380,10 @@ class StructDataMacTests: XCTestCase {
 }
 
 
-class StructDataQueryTests: XCTestCase {
+class CoreValueQueryTests: XCTestCase {
     
     var context: NSManagedObjectContext = {
-        return setUpInMemoryManagedObjectContext(StructDataMacTests)!
+        return setUpInMemoryManagedObjectContext(CoreValueMacTests)!
     }()
     
     var manyEmployees: [NSManagedObject] = []

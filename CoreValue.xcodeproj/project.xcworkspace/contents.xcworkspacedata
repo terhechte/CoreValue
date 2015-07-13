@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:StructData.xcodeproj">
+      location = "self:/Users/terhechte/Dropbox/DevEnvironment/StructData/CoreValue.xcodeproj">
    </FileRef>
 </Workspace>
