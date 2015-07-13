@@ -192,6 +192,23 @@ public protocol BoxingPersistentStruct : BoxingStruct {
         to update the objectID, thus causing multiple insertions (into the context) of the 
         same object during update */
     mutating func mutatingToObject(context: NSManagedObjectContext?) throws -> NSManagedObject
+    
+    /** Delete an object from the managedObjectStore. Has the side effect of setting the
+        objectID of the BoxingPersistentStruct instance to nil. Will do nothing if there
+        is no objectID (but return false)
+    
+        Throws an instance of NSManagedStructError in case the object cannot be found
+        in the managedObjectStore or if deletion fails due to an underlying core data
+        error.
+
+        - returns: Bool True if an object was successfully deleted, false if not
+   */
+    mutating func delete(context: NSManagedObjectContext?) throws -> Bool
+    
+    /** Save an object to the managedObjectStore or update the current instance in the
+        managedObjectStore with the current Value Type properties.
+        Throws NSManagedStructErorr if saving fails */
+    mutating func save(context: NSManagedObjectContext) throws
 }
 
 public protocol UnboxingStruct : Unboxing {
@@ -467,6 +484,7 @@ public enum NSManagedStructError : ErrorType {
     case StructConversionError(message: String)
     case StructValueError(message: String)
     case StructUpdateError(message: String)
+    case StructDeleteError(message: String)
 }
 
 /**
@@ -530,6 +548,23 @@ public extension BoxingPersistentStruct {
             self.objectID = result.objectID
         }
         return result
+    }
+    
+    mutating func delete(context: NSManagedObjectContext?) throws -> Bool {
+        guard let ctx = context, oid = self.objectID else { return false }
+        
+        do {
+            let object = try ctx.existingObjectWithID(oid)
+            ctx.deleteObject(object)
+        } catch let error {
+            NSManagedStructError.StructDeleteError(message: "Could not locate object \(oid) in context \(context): \(error)")
+        }
+        
+        return true
+    }
+    
+    mutating func save(context: NSManagedObjectContext) throws {
+        try self.mutatingToObject(context)
     }
 }
 

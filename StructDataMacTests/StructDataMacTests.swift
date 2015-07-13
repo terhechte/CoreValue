@@ -468,4 +468,32 @@ class StructDataQueryTests: XCTestCase {
         let results: [StoredShop] = StoredShop.query(self.context, predicate: predicate)
         XCTAssert(results.count == 1, "Wrong amount of objects, update did insert: \(results.count)")
     }
+    
+    func testDeletion() {
+        // create two shops
+        var s1 = StoredShop(objectID: nil, name: "shop1", owner: Employee(name: "a", age: 4, position: nil, department: "", job: ""))
+        do {
+            try s1.save(self.context)
+        } catch let e {
+            XCTAssert(false, "\(e)")
+        }
+        
+        var s2 = StoredShop(objectID: nil, name: "shop2", owner: Employee(name: "a", age: 4, position: nil, department: "", job: ""))
+        do {
+            try s2.save(self.context)
+        } catch let e {
+            XCTAssert(false, "\(e)")
+        }
+        
+        // delete one
+        do {
+            try s2.delete(self.context)
+        } catch let error {
+            XCTAssert(false, "Deletion Failed: \(error)")
+        }
+        
+        // and count
+        let results: [StoredShop] = StoredShop.query(self.context, predicate: nil)
+        XCTAssert(results.count == 1, "Failed to delete object \(s2) from context")
+    }
 }
