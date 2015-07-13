@@ -75,6 +75,21 @@ struct Other: NSManagedStruct {
     }
 }
 
+struct StoredShop: NSManagedPersistentStruct {
+    static let EntityName = "Shop"
+    
+    var objectID: NSManagedObjectID?
+    var name: String
+    var owner: Employee
+    
+    static func fromObject(o: NSManagedObject) -> Unboxed<StoredShop> {
+        return curry(self.init)
+            <^> o <|? "objectID"
+            <*> o <| "name"
+            <*> o <| "owner"
+    }
+}
+
 func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext? {
     let b = NSBundle(forClass: cls)
     let modelURL = b.URLForResource("StructDataMacTests", withExtension: "mom")!
@@ -415,5 +430,42 @@ class StructDataQueryTests: XCTestCase {
         } else {
             XCTAssert(false, "Wrong query amount result: 0")
         }
+    }
+    
+    func testStorage() {
+        // test whether storing / updating works properly
+        
+        // create two shops
+        var s1 = StoredShop(objectID: nil, name: "shop1", owner: Employee(name: "a", age: 4, position: nil, department: "", job: ""))
+        do {
+            try s1.mutatingToObject(self.context)
+        } catch let e {
+            XCTAssert(false, "\(e)")
+        }
+        
+        var s2 = StoredShop(objectID: nil, name: "shop2", owner: Employee(name: "a", age: 4, position: nil, department: "", job: ""))
+        do {
+            try s2.mutatingToObject(self.context)
+        } catch let e {
+            XCTAssert(false, "\(e)")
+        }
+        
+        // now update both shops
+        do {
+            try s1.mutatingToObject(self.context)
+        } catch let e {
+            XCTAssert(false, "\(e)")
+        }
+        
+        do {
+            try s2.mutatingToObject(self.context)
+        } catch let e {
+            XCTAssert(false, "\(e)")
+        }
+        
+        // And query the count
+        let predicate = NSPredicate(format: "self.name=='shop1'", argumentArray: [])
+        let results: [StoredShop] = StoredShop.query(self.context, predicate: predicate)
+        XCTAssert(results.count == 1, "Wrong amount of objects, update did insert: \(results.count)")
     }
 }
