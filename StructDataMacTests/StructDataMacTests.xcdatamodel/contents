@@ -2,7 +2,7 @@
 <model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="8118.20" systemVersion="14D136" minimumToolsVersion="Automatic">
     <entity name="Company" syncable="YES">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
-        <relationship name="employees" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Company" syncable="YES"/>
+        <relationship name="employees" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Employee" inverseName="company" inverseEntity="Employee" syncable="YES"/>
     </entity>
     <entity name="Employee" syncable="YES">
         <attribute name="age" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
@@ -10,7 +10,8 @@
         <attribute name="job" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="position" optional="YES" attributeType="String" syncable="YES"/>
-        <relationship name="company" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Company" syncable="YES"/>
+        <relationship name="company" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Company" inverseName="employees" inverseEntity="Company" syncable="YES"/>
+        <relationship name="shop" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Shop" inverseName="owner" inverseEntity="Shop" syncable="YES"/>
     </entity>
     <entity name="Other" syncable="YES">
         <attribute name="boolean" optional="YES" attributeType="Boolean" syncable="YES"/>
@@ -23,12 +24,12 @@
     </entity>
     <entity name="Shop" syncable="YES">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
-        <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" ordered="YES" destinationEntity="Employee" syncable="YES"/>
+        <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" ordered="YES" destinationEntity="Employee" inverseName="shop" inverseEntity="Employee" syncable="YES"/>
     </entity>
     <elements>
         <element name="Company" positionX="-54" positionY="36" width="128" height="75"/>
-        <element name="Employee" positionX="-63" positionY="-18" width="128" height="135"/>
-        <element name="Shop" positionX="-54" positionY="27" width="128" height="75"/>
+        <element name="Employee" positionX="-63" positionY="-18" width="128" height="150"/>
         <element name="Other" positionX="-54" positionY="36" width="128" height="30"/>
+        <element name="Shop" positionX="-54" positionY="27" width="128" height="75"/>
     </elements>
 </model>

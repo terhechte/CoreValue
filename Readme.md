@@ -11,9 +11,10 @@ NSManagedObject -> ValueType
 
 ### Todo
 - [ ] add support for optional array types ([Employee]?)
-- [ ] add support for setting the inverse relationship (this is tricky to achieve for the struct part, as we don't have references there, since it should work as is for core data, we may not support this?)
 - [ ] think about renaming to CoreValue / NSManagedValue
 - [ ] add iOS target
+- [ ] add carthage support (sharing scheme, testing it)
+- [ ] add travis build
 - [ ] add support for nsset / unordered lists
 - [ ] add support for fetched properties (could be a struct a la (objects, predicate))
 - [ ] support transformable: https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/CoreData/Articles/cdNSAttributes.html
