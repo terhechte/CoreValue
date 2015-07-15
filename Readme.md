@@ -9,7 +9,7 @@
 
 - Uses Swift Reflection to convert value types to NSManagedObjects
 - iOS and Mac OS X support
-- Use with `structs` and `classes`
+- Use with `structs`
 - Works fine with `let` and `var` based properties
 - Swift 2.0
 
@@ -105,7 +105,7 @@ Let's see what they do.
 
 ### BoxingPersistentStruct
 
-Boxing is the process of taking a value type and returning a NSManagedObject. CoreValue really loves you and that's why it does all the hard work for you via Swift's `Reflection` feature. Remember how you had to tell Swift for Unboxing specifically which fields you wanted to unbox into a value type? Not so with Boxing, as can be seen below:
+Boxing is the process of taking a value type and returning a NSManagedObject. CoreValue really loves you and that's why it does all the hard work for you via Swift's `Reflection` feature. See for yourself:
 
 ``` Swift
 struct Counter : BoxingStruct
@@ -180,7 +180,8 @@ struct Counter : UnboxingStruct
 	var count: Int
 	let name: String
 	static func fromObject(object: NSManagedObject) -> Unboxed<Counter> {
-		return Unboxed.Success(Counter(count: object.valueForKey("count")!.integerValue, name: object.valueForKey("name")!))
+	return Unboxed.Success(Counter(count: object.valueForKey("count")!.integerValue,
+           name: object.valueForKey("name") as? String!))
 	}
 }
 ```
@@ -220,6 +221,8 @@ Apply on the curried self.init
 Second operation: Take `object`, call `valueForKey` with the key `"count"` and assign this as the value for the second type of the curryed init function `B`
 
 #### Other Operators
+
+Custom Operators are observed as a critical Swift feature, and rightly so. Too many of those make a codebase difficult to read and understand. The following custom operators are the same as in several other Swift Frameworks (see Runes and Argo). They're basically a verbatim copy from Haskell, so while that doesn't make them less custom or even official, they're at least unofficially agreed upon.
 
 `<|` is not the only operator needed to encode objects. Here's a list of all supported operators:
 
@@ -262,6 +265,64 @@ Since most of the time you probably want boxing and unboxing functionality, Core
 
 ## Docs
 (Coming, have a look at [CoreValue.swift](https://github.com/terhechte/CoreValue/blob/master/CoreValue/CoreValue.swift), it's full of docstrings)
+
+Alternatively, there's a lot of usage in the [Unit Tests](https://github.com/terhechte/CoreValue/blob/master/CoreValueMacTests/CoreValueTests.swift).
+
+Meanwhile, here's a  more complex example of CoreValue in use:
+
+``` Swift
+struct Employee : NSManagedPersistentStruct {
+    
+    static let EntityName = "Employee"
+    
+    var objectID: NSManagedObjectID?
+
+    let name: String
+    var age: Int16
+    let position: String?
+    let department: String
+    let job: String
+    
+    static func fromObject(o: NSManagedObject) -> Unboxed<Employee> {
+        return curry(self.init)
+            <^> o <| "objectID"
+            <*> o <| "name"
+            <*> o <| "age"
+            <*> o <|? "position"
+            <*> o <| "department"
+            <*> o <| "job"
+    }
+}
+
+struct Shop: NSManagedPersistentStruct {
+    static let EntityName = "Shop"
+    
+    var objectID: NSManagedObjectID?
+
+    var name: String
+    var age: Int16
+    var employees: [Employee]
+    
+    static func fromObject(o: NSManagedObject) -> Unboxed<Shop> {
+        return curry(self.init)
+            <^> o <| "objectID"
+            <*> o <| "age"
+            <*> o <| "name"
+            <*> o <|| "employees"
+    }
+}
+
+// One year has passed, update the age of our shops and employees by one
+let shops: [Shop] = Shop.query(self.managedObjectContext, predicate: nil)
+for shop in shops {
+    shop.age += 1
+    for employee in shop.employees {
+        employee.age += 1
+    }
+    shop.save()
+}
+
+```
 
 ## State
 
@@ -321,10 +382,18 @@ The CoreValue source code is available under the MIT License.
 
 ## Open Tasks
 
+- [ ] add test cases for swift classes instead of structs
+- [ ] add thoughtbot curry framework https://github.com/thoughtbot/Curry
+- [ ] simplify the reflection mechanism
+- [ ] add performance tests
 - [ ] add travis build
 - [ ] support aggregation
 - [ ] add support for nsset / unordered lists
 - [ ] add support for fetched properties (could be a struct a la (objects, predicate))
 - [ ] support transformable: https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/CoreData/Articles/cdNSAttributes.html
 - [ ] add jazzy for docs and update headers to have proper docs
+- [ ] document multi threading support via objectID
+- [ ] add fetchRequest support to batch get nsmanagedobjects for an array of value types in a quicker way
+- [ ] evaluate class support
+- [ ] add more unit tests and clean up the current incarnation
 
