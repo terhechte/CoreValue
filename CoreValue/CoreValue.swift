@@ -127,10 +127,6 @@ Boxing value types into NSManagedObject instances
 */
 
 public protocol Boxing {
-    
-    /** The name of the Core Data entity that the boxed value type should become */
-    static var EntityName: String {get}
-    
     /** Box Self into the given managed object with key *withKey*
     - parameter object: The NSManagedObject that the value type self should be boxed into
     - parameter withKey: The name of the property in the NSManagedObject that it should be written to
@@ -138,17 +134,11 @@ public protocol Boxing {
     func box(object: NSManagedObject, withKey: String) throws
 }
 
-/**
-Boxing will also be used for minor value types like Int16 or Int32. Those don't require a
-EntityName. Thus, by default the EntityName is the empty string
-
-FIXME: Consider just making EntityName optional
-*/
-public extension Boxing {
-    static var EntityName: String { return "" }
-}
-
 public protocol BoxingStruct : Boxing {
+    
+    /** The name of the Core Data entity that the boxed value type should become */
+    static var EntityName: String {get}
+    
     /**
     Convert the current UnboxingStruct instance to a NSManagedObject
     throws 'NSManagedStructError' if the process fails.
@@ -178,8 +168,6 @@ extension BoxingStruct {
      T will create new instances of Tx. So, as a requirement that is with the current swift compiler
      impossible to define in types, any property on BoxingPersistentStruct also has to be of
      type BoxingPersistentStruct
-   - Things like deletion don't work yet, there's also no way to enforce saving a persistent
-     object right now except for calling mutatingToObject again
 */
 
 public protocol BoxingPersistentStruct : BoxingStruct {
@@ -270,14 +258,21 @@ extension BoxingStruct {
             var results: [T] = []
             for result in fetchResults {
                 if let result = result as? NSManagedObject {
-                    let value = T.fromObject(result)
-                    if let unboxedValue = value.value {
-                        results.append(unboxedValue)
+                    let valueBox = T.fromObject(result)
+                    switch valueBox {
+                    case .Success(let value):
+                        results.append(value)
+                    case .TypeMismatch(let message):
+                        // FIXME: if unboxing fails here, we ought to inform the user instead of
+                        // just blindly returning the empty array. Right now we'll just print
+                        // but once querying is improved, we should do something better
+                        print("Could not unbox: \(message)")
                     }
                 }
             }
             return results
-        } catch _ {
+        } catch let error {
+            print("Could not fetch, error: \(error)")
             return []
         }
     }
@@ -527,8 +522,6 @@ private extension BoxingPersistentStruct {
 
 public extension BoxingStruct {
     func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
-        // Only create an entity, if it doesn't exist yet, otherwise update it
-        // We can detect existing entities via the objectID property that is part of UnboxingStruct
         let result = try self.managedObject(context)
         
         return try internalToObject(context, result: result, entity: self)
@@ -573,6 +566,7 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
     
     let mirror = Mirror(reflecting: entity)
     
+    // FIXME: Add support for .Class here, add test cases for .Class
     if let style = mirror.displayStyle where style == .Struct {
         
         
@@ -591,6 +585,10 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
             if let value = valueMaybe as? Boxing {
                 try value.box(result, withKey: label)
             } else {
+                // FIXME: Try u sing MirrorType.descendant(first: MirrorPathType, _ rest: MirrorPathType...) -> Any?
+                //  for this. It may allow us to pattern match against valueMirror[0] without EXC_BAD_ACCESS as it
+                //  returns an optional. Would make the code below a lot cleaner
+
                 let valueMirror:MirrorType = reflect(valueMaybe)
                 if valueMirror.count == 0 {
                     result.setValue(nil, forKey: label)
