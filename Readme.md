@@ -385,7 +385,7 @@ The CoreValue source code is available under the MIT License.
 - [ ] add test cases for swift classes instead of structs
 - [ ] add thoughtbot curry framework https://github.com/thoughtbot/Curry
 - [ ] simplify the reflection mechanism
-- [ ] add performance tests
+- [x] add performance tests
 - [ ] add travis build
 - [ ] support aggregation
 - [ ] add support for nsset / unordered lists

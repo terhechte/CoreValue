@@ -498,3 +498,72 @@ class CoreValueQueryTests: XCTestCase {
         XCTAssert(results.count == 1, "Failed to delete object \(s2) from context")
     }
 }
+
+
+class CoreValuePerformanceTests: XCTestCase {
+    
+    var context: NSManagedObjectContext = {
+        return setUpInMemoryManagedObjectContext(CoreValueMacTests)!
+    }()
+    
+    var manyCompanies: [Company] = {
+        var box: [Employee] = []
+        for c in 0..<25 {
+            box.append(Employee(name: "employee", age: Int16(c), position: nil, department: "", job: ""))
+        }
+        var companyBox: [Company] = []
+        for c in 0..<50 {
+            companyBox.append(Company(name: "a Company \(c)", employees: box))
+        }
+        return companyBox
+    }()
+    
+    func testUnboxPerformance() {
+        self.measureBlock { () -> Void in
+            for _ in 0..<10 {
+                var results: [NSManagedObject] = []
+                for company in self.manyCompanies {
+                    do {
+                        let managedCompany = try company.toObject(self.context)
+                        XCTAssert(managedCompany.valueForKey("name") as? String == company.name)
+                        results.append(managedCompany)
+                    } catch let error {
+                        print("error \(error)")
+                    }
+                }
+                XCTAssert(results.count == self.manyCompanies.count, "Unboxed Companies have to be the same amount of entities")
+            }
+        }
+    }
+    
+    func testBoxPerformance() {
+        var results: [NSManagedObject] = []
+        for company in self.manyCompanies {
+            do {
+                let managedCompany = try company.toObject(self.context)
+                XCTAssert(managedCompany.valueForKey("name") as? String == company.name)
+                results.append(managedCompany)
+            } catch let error {
+                print("error \(error)")
+            }
+        }
+        
+        self.measureBlock { () -> Void in
+            for _ in 0..<10 {
+                var entities: [Company] = []
+                for object in results {
+                    switch Company.fromObject(object) {
+                    case .Success(let o):
+                        entities.append(o)
+                    default: ()
+                    }
+                }
+                
+                XCTAssert(entities.count == results.count, "Boxed Companies have to have the same amount of entities.")
+            }
+        }
+    }
+}
+
+
+
