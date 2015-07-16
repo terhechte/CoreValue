@@ -6,8 +6,6 @@
 //  Copyright © 2015 Benedikt Terhechte. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
-
 //! Project version number for CoreValue.
 FOUNDATION_EXPORT double CoreValueVersionNumber;
 

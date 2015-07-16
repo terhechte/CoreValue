@@ -6,8 +6,6 @@
 //  Copyright © 2015 Benedikt Terhechte. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-
 //! Project version number for CoreValueMac.
 FOUNDATION_EXPORT double CoreValueMacVersionNumber;
 
