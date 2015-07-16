@@ -382,8 +382,8 @@ The CoreValue source code is available under the MIT License.
 
 ## Open Tasks
 
-- [ ] add test cases for swift classes instead of structs
 - [ ] add thoughtbot curry framework https://github.com/thoughtbot/Curry
+- [ ] add cocoapods pod (current state: https://github.com/CocoaPods/CocoaPods/issues/3829)
 - [ ] simplify the reflection mechanism
 - [x] add performance tests
 - [ ] add travis build
@@ -394,6 +394,5 @@ The CoreValue source code is available under the MIT License.
 - [ ] add jazzy for docs and update headers to have proper docs
 - [ ] document multi threading support via objectID
 - [ ] add fetchRequest support to batch get nsmanagedobjects for an array of value types in a quicker way
-- [ ] evaluate class support
 - [ ] add more unit tests and clean up the current incarnation
 
