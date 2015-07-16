@@ -335,6 +335,24 @@ Fetched properties are not supported yet.
 
 ## Installation (iOS and OSX)
 
+### [CocoaPods]
+
+[CocoaPods]: http://cocoapods.org
+
+Add the following to your [Podfile](http://guides.cocoapods.org/using/the-podfile.html):
+
+```ruby
+pod 'CoreValue'
+```
+
+You will also need to make sure you're opting into using frameworks:
+
+```ruby
+use_frameworks!
+```
+
+Then run `pod install` with CocoaPods 0.36 or newer.
+
 ### [Carthage]
 
 [Carthage]: https://github.com/Carthage/Carthage
@@ -342,7 +360,7 @@ Fetched properties are not supported yet.
 Add the following to your Cartfile:
 
 ```
-github "terhechte/CoreValue" ~> 0.1
+github "terhechte/CoreValue" ~> 0.1.1
 ```
 
 Then run `carthage update`.
@@ -382,10 +400,9 @@ The CoreValue source code is available under the MIT License.
 
 ## Open Tasks
 
+- [ ] test unboxing with custom initializers (init(...))
 - [ ] add thoughtbot curry framework https://github.com/thoughtbot/Curry
-- [ ] add cocoapods pod (current state: https://github.com/CocoaPods/CocoaPods/issues/3829)
 - [ ] simplify the reflection mechanism
-- [x] add performance tests
 - [ ] add travis build
 - [ ] support aggregation
 - [ ] add support for nsset / unordered lists
