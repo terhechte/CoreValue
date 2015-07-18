@@ -9,7 +9,7 @@
 import XCTest
 import CoreData
 
-struct Employee : NSManagedStruct {
+struct Employee : CVManagedStruct {
     
     static let EntityName = "Employee"
     
@@ -29,7 +29,7 @@ struct Employee : NSManagedStruct {
     }
 }
 
-struct Shop: NSManagedStruct {
+struct Shop: CVManagedStruct {
     static let EntityName = "Shop"
     
     var name: String
@@ -42,7 +42,7 @@ struct Shop: NSManagedStruct {
     }
 }
 
-struct Company: NSManagedStruct {
+struct Company: CVManagedStruct {
     static let EntityName = "Company"
     
     var name: String
@@ -55,7 +55,7 @@ struct Company: NSManagedStruct {
     }
 }
 
-struct Other: NSManagedStruct {
+struct Other: CVManagedStruct {
     static let EntityName = "Other"
     
     var boolean: Bool
@@ -76,7 +76,7 @@ struct Other: NSManagedStruct {
     }
 }
 
-struct StoredShop: NSManagedPersistentStruct {
+struct StoredShop: CVManagedPersistentStruct {
     static let EntityName = "Shop"
     
     var objectID: NSManagedObjectID?
@@ -150,9 +150,9 @@ class CoreValueMacTests: XCTestCase {
         super.setUp()
         do {
             self.nsEmployee1 = try self.employee1.toObject(self.context)
-        }catch NSManagedStructError.StructConversionError(let msg) {
+        }catch CVManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch NSManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.StructValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -162,9 +162,9 @@ class CoreValueMacTests: XCTestCase {
         self.nsEmployee2 = try! self.employee2.toObject(self.context)
         do {
             self.nsShop = try self.shop.toObject(self.context)
-        } catch NSManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch NSManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.StructValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -173,9 +173,9 @@ class CoreValueMacTests: XCTestCase {
         
         do {
             self.nsCompany = try self.company.toObject(self.context)
-        } catch NSManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch NSManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.StructValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -184,9 +184,9 @@ class CoreValueMacTests: XCTestCase {
         
         do {
             self.nsOther = try self.other.toObject(self.context)
-        } catch NSManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch NSManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.StructValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -208,9 +208,9 @@ class CoreValueMacTests: XCTestCase {
             if (cd.valueForKey("age") as! NSNumber).integerValue != Int(self.employee1.age) {
                 XCTAssert(false, "Conversion failed: age")
             }
-        } catch NSManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch NSManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.StructValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -230,9 +230,9 @@ class CoreValueMacTests: XCTestCase {
             if (cd.valueForKey("position") != nil) {
                 XCTAssert(false, "Conversion failed: age")
             }
-        } catch NSManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch NSManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.StructValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -274,9 +274,9 @@ class CoreValueMacTests: XCTestCase {
             if ((cd.valueForKey("owner")?.valueForKey("name") as! String) != self.shop.owner.name) {
                 XCTAssert(false, "Conversion failed: owner's name")
             }
-        } catch NSManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch NSManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.StructValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -313,9 +313,9 @@ class CoreValueMacTests: XCTestCase {
                     XCTAssert(false, "Did not box all employees")
                 }
             }
-        } catch NSManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch NSManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.StructValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -369,9 +369,9 @@ class CoreValueMacTests: XCTestCase {
                 return
             }
             
-        } catch NSManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.StructConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch NSManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.StructValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)

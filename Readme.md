@@ -24,7 +24,7 @@ CoreValue is a lightweight wrapper framework around Core Data. It takes care of 
 The following struct supports boxing, unboxing, and keeping object state:
 
 ``` Swift
-	struct Shop: NSManagedPersistentStruct {
+	struct Shop: CVManagedPersistentStruct {
 	
 	    // The name of the CoreData entity
 	    static let EntityName = "Shop"
@@ -99,7 +99,7 @@ If no NSPredicate is given, all objects for the selected Entity are returned.
 
 ##Usage in Detail
 
-`NSManagedPersistentStruct` is a type alias for the two primary protocols of CoreValue: `BoxingPersistentStruct`, `UnboxingStruct`.
+`CVManagedPersistentStruct` is a type alias for the two primary protocols of CoreValue: `BoxingPersistentStruct`, `UnboxingStruct`.
 
 Let's see what they do.
 
@@ -259,9 +259,9 @@ switch Shop.fromObject(managedObject) {
 ```
 
 
-### NSManagedStruct
+### CVManagedStruct
 
-Since most of the time you probably want boxing and unboxing functionality, CoreValue includes two handy type aliases, `NSManagedStruct` and `NSManagedPersistentStruct` which contain Boxing and Unboxing in one type.
+Since most of the time you probably want boxing and unboxing functionality, CoreValue includes two handy type aliases, `CVManagedStruct` and `CVManagedPersistentStruct` which contain Boxing and Unboxing in one type.
 
 ## Docs
 (Coming, have a look at [CoreValue.swift](https://github.com/terhechte/CoreValue/blob/master/CoreValue/CoreValue.swift), it's full of docstrings)
@@ -271,7 +271,7 @@ Alternatively, there's a lot of usage in the [Unit Tests](https://github.com/ter
 Meanwhile, here's a  more complex example of CoreValue in use:
 
 ``` Swift
-struct Employee : NSManagedPersistentStruct {
+struct Employee : CVManagedPersistentStruct {
     
     static let EntityName = "Employee"
     
@@ -294,7 +294,7 @@ struct Employee : NSManagedPersistentStruct {
     }
 }
 
-struct Shop: NSManagedPersistentStruct {
+struct Shop: CVManagedPersistentStruct {
     static let EntityName = "Shop"
     
     var objectID: NSManagedObjectID?
@@ -360,7 +360,7 @@ Then run `pod install` with CocoaPods 0.36 or newer.
 Add the following to your Cartfile:
 
 ```
-github "terhechte/CoreValue" ~> 0.1.1
+github "terhechte/CoreValue" ~> 0.1.2
 ```
 
 Then run `carthage update`.
@@ -389,6 +389,16 @@ Benedikt Terhechte
 
 [Appventure.me](http://appventure.me)
 
+## Changelog
+
+### Version 0.1.2
+Renamed NSManagedStruct and NSPersistentManagedStruct to CVManagedStruct and CVPersistentManagedStruct as [NS is preserved prefix for Apple classes](https://github.com/terhechte/CoreValue/issues/1)
+
+### Version 0.1.1
+Added CocoaPods support
+
+### Version 0.1.0
+Initial Release
 
 ## Acknoledgements
 
@@ -400,6 +410,7 @@ The CoreValue source code is available under the MIT License.
 
 ## Open Tasks
 
+- [ ] rename NSStructured* to CVStructured*
 - [ ] test unboxing with custom initializers (init(...))
 - [ ] add thoughtbot curry framework https://github.com/thoughtbot/Curry
 - [ ] simplify the reflection mechanism

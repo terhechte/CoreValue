@@ -141,7 +141,7 @@ public protocol BoxingStruct : Boxing {
     
     /**
     Convert the current UnboxingStruct instance to a NSManagedObject
-    throws 'NSManagedStructError' if the process fails.
+    throws 'CVManagedStructError' if the process fails.
     
     The implementation for this is included via an extension (see below)
     it uses reflection to automatically convert this
@@ -185,7 +185,7 @@ public protocol BoxingPersistentStruct : BoxingStruct {
         objectID of the BoxingPersistentStruct instance to nil. Will do nothing if there
         is no objectID (but return false)
     
-        Throws an instance of NSManagedStructError in case the object cannot be found
+        Throws an instance of CVManagedStructError in case the object cannot be found
         in the managedObjectStore or if deletion fails due to an underlying core data
         error.
 
@@ -195,7 +195,7 @@ public protocol BoxingPersistentStruct : BoxingStruct {
     
     /** Save an object to the managedObjectStore or update the current instance in the
         managedObjectStore with the current Value Type properties.
-        Throws NSManagedStructErorr if saving fails */
+        Throws CVManagedStructErorr if saving fails */
     mutating func save(context: NSManagedObjectContext) throws
 }
 
@@ -222,14 +222,14 @@ extension UnboxingStruct {
 }
 
 // MARK: -
-// MARK: NSManagedStruct
+// MARK: CVManagedStruct
 
 /**
 Type aliases for boxing/unboxing support, and the same for persistence
 */
-public typealias NSManagedStruct = protocol<BoxingStruct, UnboxingStruct>
+public typealias CVManagedStruct = protocol<BoxingStruct, UnboxingStruct>
 
-public typealias NSManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
+public typealias CVManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
 
 // MARK: Querying
 
@@ -476,7 +476,7 @@ extension NSDecimalNumber: Unboxing, Boxing {
 This error will be thrown if boxing fails because the core data model
 does not know or support the requested property
 */
-public enum NSManagedStructError : ErrorType {
+public enum CVManagedStructError : ErrorType {
     case StructConversionError(message: String)
     case StructValueError(message: String)
     case StructUpdateError(message: String)
@@ -512,7 +512,7 @@ private extension BoxingPersistentStruct {
             } catch let error {
                 // In this case, we don't want to just insert a new object,
                 // instead we should tell the user about this issue.
-                throw NSManagedStructError.StructUpdateError(message: "Could not fetch object \(self) for id \(objectID): \(error)")
+                throw CVManagedStructError.StructUpdateError(message: "Could not fetch object \(self) for id \(objectID): \(error)")
             }
         } else {
             return virginObjectForEntity(self.dynamicType.EntityName, context: context)
@@ -551,7 +551,7 @@ public extension BoxingPersistentStruct {
             let object = try ctx.existingObjectWithID(oid)
             ctx.deleteObject(object)
         } catch let error {
-            NSManagedStructError.StructDeleteError(message: "Could not locate object \(oid) in context \(context): \(error)")
+            CVManagedStructError.StructDeleteError(message: "Could not locate object \(oid) in context \(context): \(error)")
         }
         
         return true
@@ -615,7 +615,7 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
                         
                     default:
                         // If we end up here, we were unable to decode it
-                        throw NSManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
+                        throw CVManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
                     }
                 }
             }
@@ -623,6 +623,6 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
         
         return result
     }
-    throw NSManagedStructError.StructConversionError(message: "Object is not a struct: \(entity)")
+    throw CVManagedStructError.StructConversionError(message: "Object is not a struct: \(entity)")
 }
 
