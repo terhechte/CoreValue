@@ -1,6 +1,8 @@
 <p align="center">
 <img src="Documents/header.png" srcset="Documents/header.png 1x Documents/header@2x.png 2x" /><br/>
 <a href="https://github.com/Carthage/Carthage"><img src="https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat" /></a>
+<a href="https://cocoapods.org"><img src="https://img.shields.io/cocoapods/v/CoreValue.svg" /></a>
+<img src="https://img.shields.io/cocoapods/p/CoreValue.svg" />
 </p>
 
 
@@ -410,7 +412,6 @@ The CoreValue source code is available under the MIT License.
 
 ## Open Tasks
 
-- [ ] rename NSStructured* to CVStructured*
 - [ ] test unboxing with custom initializers (init(...))
 - [ ] add thoughtbot curry framework https://github.com/thoughtbot/Curry
 - [ ] simplify the reflection mechanism
