@@ -7,10 +7,10 @@
 //
 
 //! Project version number for CoreValue.
-FOUNDATION_EXPORT double CoreValueVersionNumber;
+extern double CoreValueVersionNumber;
 
 //! Project version string for CoreValue.
-FOUNDATION_EXPORT const unsigned char CoreValueVersionString[];
+extern const unsigned char CoreValueVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <CoreValue/PublicHeader.h>
 
