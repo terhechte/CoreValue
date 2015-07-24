@@ -56,7 +56,7 @@ public func <|? <A where A: Unboxing, A == A.StructureType>(value: NSManagedObje
 
 public func <|| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) -> Unboxed<[A]> {
     if let s = value.valueForKey(key) {
-        return Array.unbox(s)
+        return Array<A>.unbox(s)
     }
     return Unboxed.TypeMismatch("\(key) \(A.self)")
 }
@@ -318,8 +318,9 @@ type constraints.
 
 - Currently, there's no support for NSSet
 */
-extension Array where T: Unboxing, T == T.StructureType {
-    public static func unbox(value: AnyObject) -> Unboxed<[T]> {
+// <T: Unboxing where T == T.StructureType>
+extension Array {
+    public static func unbox<T: Unboxing where T == T.StructureType>(value: AnyObject) -> Unboxed<[T]> {
         switch value {
         case let orderedSet as NSOrderedSet:
             var container: [T] = []
@@ -585,38 +586,31 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
             if let value = valueMaybe as? Boxing {
                 try value.box(result, withKey: label)
             } else {
-                // FIXME: Try u sing MirrorType.descendant(first: MirrorPathType, _ rest: MirrorPathType...) -> Any?
-                //  for this. It may allow us to pattern match against valueMirror[0] without EXC_BAD_ACCESS as it
-                //  returns an optional. Would make the code below a lot cleaner
-
-                let valueMirror:MirrorType = reflect(valueMaybe)
-                if valueMirror.count == 0 {
+                let valueMirror: Mirror = Mirror(reflecting: valueMaybe)
+                //let valueMirror:MirrorType = reflect(valueMaybe)
+                switch (valueMirror.displayStyle, valueMirror.children.first) {
+                    // FIXME: I've yet to understand what *nil* means here.
+                case (.Optional?, nil):
                     result.setValue(nil, forKey: label)
-                } else {
-                    // Since MirrorType has no typealias for it's children, we have to 
-                    // unpack the first one in order to identify them
-                    switch (valueMirror.count, valueMirror.disposition, valueMirror[0]) {
-                    case (_, .Optional, (_, let some)) where some.value is AnyObject:
-                        result.setValue(some.value as? AnyObject, forKey: label)
-                    case (_, .IndexContainer, (_, let some)) where some.value is BoxingStruct:
-                        // Since valueMirror isn't an array type, we can't map over it or even properly extend it
-                        // Matching valueMaybe against [_Structured], on the other hand, doesn't work either
-                        var objects: [NSManagedObject] = []
-                        for c in 0..<valueMirror.count {
-                            if let value = valueMirror[c].1.value as? BoxingStruct {
-                                objects.append(try value.toObject(context))
-                            }
+                    break
+                case (.Optional?, let child?):
+                    result.setValue(child.value as? AnyObject, forKey: label)
+                    break
+                case (.Collection?, _?):
+                    var objects: [NSManagedObject] = []
+                    for (_, value) in valueMirror.children {
+                        if let boxedValue = value as? BoxingStruct {
+                            objects.append(try boxedValue.toObject(context))
                         }
-                        
-                        if objects.count > 0 {
-                            let mutableValue = result.mutableOrderedSetValueForKey(label)
-                            mutableValue.addObjectsFromArray(objects)
-                        }
-                        
-                    default:
-                        // If we end up here, we were unable to decode it
-                        throw CVManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
                     }
+                    
+                    if objects.count > 0 {
+                        let mutableValue = result.mutableOrderedSetValueForKey(label)
+                        mutableValue.addObjectsFromArray(objects)
+                    }
+                default:
+                    // If we end up here, we were unable to decode it
+                    throw CVManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
                 }
             }
         }
