@@ -567,9 +567,7 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
     
     let mirror = Mirror(reflecting: entity)
     
-    // FIXME: Add support for .Class here, add test cases for .Class
     if let style = mirror.displayStyle where style == .Struct {
-        
         
         for (labelMaybe, valueMaybe) in mirror.children {
             
@@ -582,20 +580,27 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
                 continue
             }
             
-            // FIXME: This still looks awful. Need to spend more time cleaning this up
+            // If the value itself conforms to Boxing, we can just box it
             if let value = valueMaybe as? Boxing {
                 try value.box(result, withKey: label)
             } else {
+                // If this is a sequence type (optional or collection)
+                // We have to have a look at the values to see if they conform to boxing
+                // The alternative, constraining the type checker a la (roughly)
+                // extension Array<T where Generator.Element==Boxing> : Boxing
+                // extension Optional<T where Generator.Element==Boxing> : Boxing
+                // doesn't currently work with Swift 2
                 let valueMirror: Mirror = Mirror(reflecting: valueMaybe)
-                //let valueMirror:MirrorType = reflect(valueMaybe)
+                
+                // We map the display style as well as the optional firt child,
                 switch (valueMirror.displayStyle, valueMirror.children.first) {
-                    // FIXME: I've yet to understand what *nil* means here.
+                    // Empty Optional
                 case (.Optional?, nil):
                     result.setValue(nil, forKey: label)
-                    break
+                    // Optional with Value
                 case (.Optional?, let child?):
                     result.setValue(child.value as? AnyObject, forKey: label)
-                    break
+                    // A collection of objects
                 case (.Collection?, _?):
                     var objects: [NSManagedObject] = []
                     for (_, value) in valueMirror.children {

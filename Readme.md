@@ -417,7 +417,7 @@ The CoreValue source code is available under the MIT License.
 
 - [ ] test unboxing with custom initializers (init(...))
 - [ ] add thoughtbot curry framework https://github.com/thoughtbot/Curry
-- [ ] simplify the reflection mechanism
+- [ ] change the protocol composition so that the required implementations (entityname, objectID, fromObject) form an otherwise empty protocol so it is easier to see the protocol and implement the requirements
 - [ ] add travis build
 - [ ] support aggregation
 - [ ] add support for nsset / unordered lists
