@@ -226,10 +226,28 @@ extension UnboxingStruct {
 
 /**
 Type aliases for boxing/unboxing support, and the same for persistence
-*/
-public typealias CVManagedStruct = protocol<BoxingStruct, UnboxingStruct>
 
-public typealias CVManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
+Note: In Swift2 b6 the 'StructureType' information seems to get lost when
+using the protocol<> type. In order to prevent that, I'm re-inserting them here.
+Temporarily.
+An alternative would be not using the protocol<> but instead
+
+protocol CVManagedStruct : BoxingStruct, UnboxingStruct {
+    typealias StructureType = Self
+}
+
+*/
+public typealias _CVManagedStruct = protocol<BoxingStruct, UnboxingStruct>
+
+protocol CVManagedStruct : _CVManagedStruct {
+    typealias StructureType = Self
+}
+
+public typealias _CVManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
+
+protocol CVManagedPersistentStruct : _CVManagedPersistentStruct {
+    typealias StructureType = Self
+}
 
 // MARK: Querying
 
