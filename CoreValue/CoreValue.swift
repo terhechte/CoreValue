@@ -569,6 +569,9 @@ public extension BoxingPersistentStruct {
         do {
             let object = try ctx.existingObjectWithID(oid)
             ctx.deleteObject(object)
+            //Commit changes to remove object from the uniquing tables
+            try ctx.save()
+            
         } catch let error {
             CVManagedStructError.StructDeleteError(message: "Could not locate object \(oid) in context \(context): \(error)")
         }
