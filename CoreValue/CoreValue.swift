@@ -15,9 +15,9 @@ public let CVErrorDomain = "CVErrorDomain"
 public let CVErrorUnboxFailed = 1
 
 internal extension NSError {
-	convenience init(unboxErrorMessage: String) {
-		self.init(domain: CVErrorDomain, code: CVErrorUnboxFailed, userInfo: [NSLocalizedDescriptionKey: unboxErrorMessage])
-	}
+    convenience init(unboxErrorMessage: String) {
+        self.init(domain: CVErrorDomain, code: CVErrorUnboxFailed, userInfo: [NSLocalizedDescriptionKey: unboxErrorMessage])
+    }
 }
 
 /**
@@ -41,26 +41,26 @@ infix operator <|| { associativity left precedence 150 }
 infix operator <|? { associativity left precedence 150 }
 
 public func <^> <A, B>(f: ((A) throws -> B), a: A) rethrows -> B {
-	return try f(a)
+    return try f(a)
 }
 
 public func <| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) throws -> A {
     if let s = value.valueForKey(key) {
         return try A.unbox(s)
     }
-	throw NSError(unboxErrorMessage: "\(key) \(A.self)")
+    throw NSError(unboxErrorMessage: "\(key) \(A.self)")
 }
 
 public func <|? <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) -> A? {
-	return try? value <| key
+    return try? value <| key
 }
 
 public func <|| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) throws -> [A] {
     if let s = value.valueForKey(key) {
         return try Array<A>.unbox(s)
-	} else {
-		throw NSError(unboxErrorMessage: "\(key) \(A.self)")
-	}
+    } else {
+        throw NSError(unboxErrorMessage: "\(key) \(A.self)")
+    }
 }
 
 /**
@@ -197,12 +197,12 @@ public protocol UnboxingStruct : Unboxing {
 
 extension UnboxingStruct {
     public static func unbox<A: UnboxingStruct where A == A.StructureType>(value: AnyObject) throws -> A {
-		switch value {
-			case let object as NSManagedObject:
-				return try A.fromObject(object)
-		default:
-			throw NSError(unboxErrorMessage: "\(value) is not NSManagedObject")
-		}
+        switch value {
+            case let object as NSManagedObject:
+                return try A.fromObject(object)
+        default:
+            throw NSError(unboxErrorMessage: "\(value) is not NSManagedObject")
+        }
     }
 }
 
@@ -250,19 +250,19 @@ extension BoxingStruct {
     public static func query<T: UnboxingStruct>(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: [NSSortDescriptor]? = nil) throws -> Array<T> {
         let fetchRequest = NSFetchRequest(entityName: self.EntityName)
 
-		if let sortDescriptors = sortDescriptors {
-	        fetchRequest.sortDescriptors = sortDescriptors
-		}
+        if let sortDescriptors = sortDescriptors {
+            fetchRequest.sortDescriptors = sortDescriptors
+        }
         
         if let p = predicate {
             fetchRequest.predicate = p
         }
 
-		let fetchResults = try context.executeFetchRequest(fetchRequest)
-		return try fetchResults.map { obj in
-			try T.fromObject(obj as! NSManagedObject)
-		}
-	}
+        let fetchResults = try context.executeFetchRequest(fetchRequest)
+        return try fetchResults.map { obj in
+            try T.fromObject(obj as! NSManagedObject)
+        }
+    }
 
 }
 
@@ -307,9 +307,9 @@ extension Array {
     public static func unbox<T: Unboxing where T == T.StructureType>(value: AnyObject) throws -> [T] {
         switch value {
         case let orderedSet as NSOrderedSet:
-			return try orderedSet.map { try T.unbox($0) }
+            return try orderedSet.map { try T.unbox($0) }
         default:
-			throw NSError(unboxErrorMessage: "Array")
+            throw NSError(unboxErrorMessage: "Array")
         }
     }
 }
@@ -318,9 +318,9 @@ extension Int: Unboxing, Boxing {
     public static func unbox(value: AnyObject) throws -> Int {
         switch value {
         case let v as Int:
-			return v
-		default:
-			throw NSError(unboxErrorMessage: "Int")
+            return v
+        default:
+            throw NSError(unboxErrorMessage: "Int")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -332,9 +332,9 @@ extension Int16: Unboxing, Boxing {
     public static func unbox(value: AnyObject) throws -> Int16 {
         switch value {
         case let v as NSNumber:
-			return v.shortValue
+            return v.shortValue
         default:
-			throw NSError(unboxErrorMessage: "Int16")
+            throw NSError(unboxErrorMessage: "Int16")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -346,9 +346,9 @@ extension Int32: Unboxing, Boxing {
     public static func unbox(value: AnyObject) throws -> Int32 {
         switch value {
         case let v as NSNumber:
-			return v.intValue
+            return v.intValue
         default:
-			throw NSError(unboxErrorMessage: "Int32")
+            throw NSError(unboxErrorMessage: "Int32")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -360,9 +360,9 @@ extension Int64: Unboxing, Boxing {
     public static func unbox(value: AnyObject) throws -> Int64 {
         switch value {
         case let v as NSNumber:
-			return v.longLongValue
+            return v.longLongValue
         default:
-			throw NSError(unboxErrorMessage: "Int64")
+            throw NSError(unboxErrorMessage: "Int64")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -374,9 +374,9 @@ extension Double: Unboxing, Boxing {
     public static func unbox(value: AnyObject) throws -> Double {
         switch value {
         case let v as NSNumber:
-			return v.doubleValue
+            return v.doubleValue
         default:
-			throw NSError(unboxErrorMessage: "Double")
+            throw NSError(unboxErrorMessage: "Double")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -422,12 +422,12 @@ extension String: Unboxing, Boxing {
 
 extension NSData: Unboxing, Boxing {
     public static func unbox(value: AnyObject) throws -> NSData {
-		switch value {
-		case let data as NSData:
-			return data
-		default:
-			throw NSError(unboxErrorMessage: "NSData")
-		}
+        switch value {
+        case let data as NSData:
+            return data
+        default:
+            throw NSError(unboxErrorMessage: "NSData")
+        }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
@@ -436,12 +436,12 @@ extension NSData: Unboxing, Boxing {
 
 extension NSDate: Unboxing, Boxing {
     public static func unbox(value: AnyObject) throws -> NSDate {
-		switch value {
-		case let date as NSDate:
-			return date
-		default:
-			throw NSError(unboxErrorMessage: "NSDate")
-		}
+        switch value {
+        case let date as NSDate:
+            return date
+        default:
+            throw NSError(unboxErrorMessage: "NSDate")
+        }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
@@ -450,12 +450,12 @@ extension NSDate: Unboxing, Boxing {
 
 extension NSDecimalNumber: Unboxing, Boxing {
     public static func unbox(value: AnyObject) throws -> NSDecimalNumber {
-		switch value {
-		case let number as NSDecimalNumber:
-			return number
-		default:
-			throw NSError(unboxErrorMessage: "NSDecimalNumber")
-		}
+        switch value {
+        case let number as NSDecimalNumber:
+            return number
+        default:
+            throw NSError(unboxErrorMessage: "NSDecimalNumber")
+        }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
