@@ -622,7 +622,7 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
                 case (.Optional?, let child?):
                     result.setValue(child.value as? AnyObject, forKey: label)
                     // A collection of objects
-                case (.Collection?, _?):
+                case (.Collection?, _):
                     var objects: [NSManagedObject] = []
                     for (_, value) in valueMirror.children {
                         if let boxedValue = value as? BoxingStruct {
