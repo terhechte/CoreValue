@@ -13,7 +13,7 @@
 - iOS and Mac OS X support
 - Use with `structs`
 - Works fine with `let` and `var` based properties
-- Swift 2.0, b4 (for Swift 2, b3 and later use version v0.1.2)
+- Swift 2.2
 
 ##Rationale
 
@@ -362,7 +362,7 @@ Then run `pod install` with CocoaPods 0.36 or newer.
 Add the following to your Cartfile:
 
 ```
-github "terhechte/CoreValue" ~> 0.1.5
+github "terhechte/CoreValue" ~> 0.1.6
 ```
 
 Then run `carthage update`.
@@ -393,7 +393,7 @@ Benedikt Terhechte
 
 ## Changelog
 
-### Version 0.1.5
+### Version 0.1.6
 - Made `CVManagedPersistentStruct` public
 - Fixed issue with empty collections
 
