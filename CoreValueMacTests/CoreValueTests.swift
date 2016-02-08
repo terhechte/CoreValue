@@ -19,13 +19,13 @@ struct Employee : CVManagedStruct {
     let department: String
     let job: String
     
-    static func fromObject(o: NSManagedObject) -> Unboxed<Employee> {
-        return curry(self.init)
+    static func fromObject(o: NSManagedObject) throws -> Employee {
+        return try curry(self.init)
             <^> o <| "name"
-            <*> o <| "age"
-            <*> o <|? "position"
-            <*> o <| "department"
-            <*> o <| "job"
+            <^> o <| "age"
+            <^> o <|? "position"
+            <^> o <| "department"
+            <^> o <| "job"
     }
 }
 
@@ -35,10 +35,10 @@ struct Shop: CVManagedStruct {
     var name: String
     var owner: Employee
     
-    static func fromObject(o: NSManagedObject) -> Unboxed<Shop> {
-        return curry(self.init)
+    static func fromObject(o: NSManagedObject) throws -> Shop {
+        return try curry(self.init)
             <^> o <| "name"
-            <*> o <| "owner"
+            <^> o <| "owner"
     }
 }
 
@@ -48,10 +48,10 @@ struct Company: CVManagedStruct {
     var name: String
     var employees: Array<Employee>
     
-    static func fromObject(o: NSManagedObject) -> Unboxed<Company> {
-        return curry(self.init)
+    static func fromObject(o: NSManagedObject) throws -> Company {
+        return try curry(self.init)
         <^> o <| "name"
-        <*> o <|| "employees"
+        <^> o <|| "employees"
     }
 }
 
@@ -65,14 +65,14 @@ struct Other: CVManagedStruct {
     var double: Double
     var float: Float
     
-    static func fromObject(o: NSManagedObject) -> Unboxed<Other> {
-        return curry(self.init)
+    static func fromObject(o: NSManagedObject) throws -> Other {
+        return try curry(self.init)
         <^> o <| "boolean"
-        <*> o <| "data"
-        <*> o <| "date"
-        <*> o <| "decimal"
-        <*> o <| "double"
-        <*> o <| "float"
+        <^> o <| "data"
+        <^> o <| "date"
+        <^> o <| "decimal"
+        <^> o <| "double"
+        <^> o <| "float"
     }
 }
 
@@ -83,11 +83,20 @@ struct StoredShop: CVManagedPersistentStruct {
     var name: String
     var owner: Employee
     
-    static func fromObject(o: NSManagedObject) -> Unboxed<StoredShop> {
-        return curry(self.init)
+    static func fromObject(o: NSManagedObject) throws -> StoredShop {
+        return try curry(self.init)
             <^> o <|? "objectID"
-            <*> o <| "name"
-            <*> o <| "owner"
+            <^> o <| "name"
+            <^> o <| "owner"
+    }
+}
+
+/// Attempt f, fail test if it throws
+private func testTry(@noescape f: () throws -> ()) {
+    do {
+        try f()
+    } catch let error as NSError {
+        XCTAssert(false, error.localizedDescription)
     }
 }
 
@@ -102,8 +111,9 @@ func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext?
     } catch _ {
         return nil
     }
-    
-    let managedObjectContext = NSManagedObjectContext()
+
+    assert(NSThread.isMainThread())
+    let managedObjectContext = NSManagedObjectContext(concurrencyType: .MainQueueConcurrencyType)
     managedObjectContext.persistentStoreCoordinator = persistentStoreCoordinator
     
     return managedObjectContext
@@ -241,27 +251,23 @@ class CoreValueMacTests: XCTestCase {
     }
     
     func testFromCoreDataNonNil() {
-        switch Employee.fromObject(self.nsEmployee1) {
-        case .Success(let t):
+        testTry {
+            let t = try Employee.fromObject(self.nsEmployee1)
             if t.name != self.employee1.name ||
-               t.age != self.employee1.age {
-                XCTAssert(false, "Conversion Error")
+                t.age != self.employee1.age {
+                    XCTAssert(false, "Conversion Error")
             }
-        case .TypeMismatch(let msg):
-            XCTAssert(false, msg)
         }
     }
     
     func testFromCoreDataNil() {
-        switch Employee.fromObject(self.nsEmployee2) {
-        case .Success(let t):
+        testTry {
+            let t = try Employee.fromObject(self.nsEmployee2)
             if t.name != self.employee2.name ||
-               t.age != self.employee2.age ||
-               t.position != nil {
-                XCTAssert(false, "Conversion Error")
+                t.age != self.employee2.age ||
+                t.position != nil {
+                    XCTAssert(false, "Conversion Error")
             }
-        case .TypeMismatch(let msg):
-            XCTAssert(false, msg)
         }
     }
     
@@ -285,14 +291,12 @@ class CoreValueMacTests: XCTestCase {
     }
     
     func testFromCoreDataSub() {
-        switch Shop.fromObject(self.nsShop) {
-        case .Success(let t):
+        testTry {
+            let t = try Shop.fromObject(self.nsShop)
             if t.name != self.shop.name ||
                 t.owner.name != self.shop.owner.name {
                     XCTAssert(false, "Conversion Error")
             }
-        case .TypeMismatch(let msg):
-            XCTAssert(false, msg)
         }
     }
     
@@ -324,8 +328,8 @@ class CoreValueMacTests: XCTestCase {
     }
     
     func testFromCoreDataSubArray() {
-        switch Company.fromObject(self.nsCompany) {
-        case .Success(let t):
+        testTry {
+            let t = try Company.fromObject(self.nsCompany)
             if t.name != self.company.name ||
                 t.employees[0].name != self.company.employees[0].name {
                     XCTAssert(false, "Conversion Error")
@@ -336,8 +340,6 @@ class CoreValueMacTests: XCTestCase {
             if t.employees.last?.name != self.company.employees.last?.name {
                 XCTAssert(false, "Wrong Employee order")
             }
-        case .TypeMismatch(let msg):
-            XCTAssert(false, msg)
         }
     }
     
@@ -403,33 +405,39 @@ class CoreValueQueryTests: XCTestCase {
     }
     
     func testQueryYoungOnes() {
-        let predicate = NSPredicate(format: "age > 10 and age < 12", argumentArray: nil)
         // Important, the results: [Employee] is required for the type checker to figure things out
-        let results: [Employee] = Employee.query(self.context, predicate: predicate)
-        if results.count != 1 {
-            XCTAssert(false, "Wrong amount for you ones \(results.count)")
+        testTry {
+            let predicate = NSPredicate(format: "age > 10 and age < 12", argumentArray: nil)
+            let results: [Employee] = try Employee.query(self.context, predicate: predicate) ?? []
+            if results.count != 1 {
+                XCTAssert(false, "Wrong amount for you ones \(results.count)")
+            }
         }
     }
     
     func testQueryOldOnes() {
-        let predicate = NSPredicate(format: "age > 50", argumentArray: nil)
-        // Important, the results: [Employee] is required for the type checker to figure things out
-        let results: [Employee] = Employee.query(self.context, predicate: predicate)
-        if results.count != 9 {
-            XCTAssert(false, "Wrong amount for old ones \(results.count)")
+        testTry {
+            let predicate = NSPredicate(format: "age > 50", argumentArray: nil)
+            // Important, the results: [Employee] is required for the type checker to figure things out
+            let results: [Employee] = try Employee.query(self.context, predicate: predicate)
+            if results.count != 9 {
+                XCTAssert(false, "Wrong amount for old ones \(results.count)")
+            }
         }
     }
     
     func testQueryOrder() {
         // Important, the results: [Employee] is required for the type checker to figure things out
         let descriptors: [NSSortDescriptor] = [NSSortDescriptor(key: "age", ascending: false)]
-        let results: [Employee] = Employee.query(self.context, predicate: nil, sortDescriptors: descriptors)
-        if let r = results.first {
-            if r.age != 59 {
-                XCTAssert(false, "wrong employee age: \(r.age)")
+        testTry {
+            let results: [Employee] = try Employee.query(self.context, predicate: nil, sortDescriptors: descriptors)
+            if let r = results.first {
+                if r.age != 59 {
+                    XCTAssert(false, "wrong employee age: \(r.age)")
+                }
+            } else {
+                XCTAssert(false, "Wrong query amount result: 0")
             }
-        } else {
-            XCTAssert(false, "Wrong query amount result: 0")
         }
     }
     
@@ -445,57 +453,49 @@ class CoreValueQueryTests: XCTestCase {
         }
         
         var s2 = StoredShop(objectID: nil, name: "shop2", owner: Employee(name: "a", age: 4, position: nil, department: "", job: ""))
-        do {
+        testTry {
             try s2.mutatingToObject(self.context)
-        } catch let e {
-            XCTAssert(false, "\(e)")
         }
         
         // now update both shops
-        do {
+        testTry {
             try s1.mutatingToObject(self.context)
-        } catch let e {
-            XCTAssert(false, "\(e)")
         }
         
-        do {
+        testTry {
             try s2.mutatingToObject(self.context)
-        } catch let e {
-            XCTAssert(false, "\(e)")
         }
         
         // And query the count
-        let predicate = NSPredicate(format: "self.name=='shop1'", argumentArray: [])
-        let results: [StoredShop] = StoredShop.query(self.context, predicate: predicate)
-        XCTAssert(results.count == 1, "Wrong amount of objects, update did insert: \(results.count)")
+        testTry {
+            let predicate = NSPredicate(format: "self.name=='shop1'", argumentArray: [])
+            let results: [StoredShop] = try StoredShop.query(self.context, predicate: predicate)
+            XCTAssert(results.count == 1, "Wrong amount of objects, update did insert: \(results.count)")
+        }
     }
     
     func testDeletion() {
         // create two shops
         var s1 = StoredShop(objectID: nil, name: "shop1", owner: Employee(name: "a", age: 4, position: nil, department: "", job: ""))
-        do {
+        testTry {
             try s1.save(self.context)
-        } catch let e {
-            XCTAssert(false, "\(e)")
         }
         
         var s2 = StoredShop(objectID: nil, name: "shop2", owner: Employee(name: "a", age: 4, position: nil, department: "", job: ""))
-        do {
+        testTry {
             try s2.save(self.context)
-        } catch let e {
-            XCTAssert(false, "\(e)")
         }
         
         // delete one
-        do {
+        testTry {
             try s2.delete(self.context)
-        } catch let error {
-            XCTAssert(false, "Deletion Failed: \(error)")
         }
         
         // and count
-        let results: [StoredShop] = StoredShop.query(self.context, predicate: nil)
-        XCTAssert(results.count == 1, "Failed to delete object \(s2) from context")
+        testTry {
+            let results: [StoredShop] = try StoredShop.query(self.context, predicate: nil)
+            XCTAssert(results.count == 1, "Failed to delete object \(s2) from context")
+        }
     }
 }
 
@@ -519,17 +519,12 @@ class CoreValuePerformanceTests: XCTestCase {
     }()
     
     func testUnboxPerformance() {
-        self.measureBlock { () -> Void in
-            for _ in 0..<10 {
-                var results: [NSManagedObject] = []
-                for company in self.manyCompanies {
-                    do {
-                        let managedCompany = try company.toObject(self.context)
-                        XCTAssert(managedCompany.valueForKey("name") as? String == company.name)
-                        results.append(managedCompany)
-                    } catch let error {
-                        print("error \(error)")
-                    }
+        self.measureBlock {
+            testTry {
+                let results: [NSManagedObject] = try self.manyCompanies.map { company in
+                    let managedCompany = try company.toObject(self.context)
+                    XCTAssert(managedCompany.valueForKey("name") as? String == company.name)
+                    return managedCompany
                 }
                 XCTAssert(results.count == self.manyCompanies.count, "Unboxed Companies have to be the same amount of entities")
             }
@@ -537,29 +532,21 @@ class CoreValuePerformanceTests: XCTestCase {
     }
     
     func testBoxPerformance() {
-        var results: [NSManagedObject] = []
-        for company in self.manyCompanies {
-            do {
+        testTry {
+            let results: [NSManagedObject] = try manyCompanies.map { company in
                 let managedCompany = try company.toObject(self.context)
                 XCTAssert(managedCompany.valueForKey("name") as? String == company.name)
-                results.append(managedCompany)
-            } catch let error {
-                print("error \(error)")
+                return managedCompany
             }
-        }
-        
-        self.measureBlock { () -> Void in
-            for _ in 0..<10 {
-                var entities: [Company] = []
-                for object in results {
-                    switch Company.fromObject(object) {
-                    case .Success(let o):
-                        entities.append(o)
-                    default: ()
+
+            self.measureBlock {
+                testTry {
+                    let entities = try results.map {
+                        try Company.fromObject($0)
                     }
+
+                    XCTAssert(entities.count == results.count, "Boxed Companies have to have the same amount of entities.")
                 }
-                
-                XCTAssert(entities.count == results.count, "Boxed Companies have to have the same amount of entities.")
             }
         }
     }

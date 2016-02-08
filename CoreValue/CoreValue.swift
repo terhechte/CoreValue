@@ -11,6 +11,15 @@ import CoreData
 
 // MARK: Unboxing
 
+public let CVErrorDomain = "CVErrorDomain"
+public let CVErrorUnboxFailed = 1
+
+internal extension NSError {
+    convenience init(unboxErrorMessage: String) {
+        self.init(domain: CVErrorDomain, code: CVErrorUnboxFailed, userInfo: [NSLocalizedDescriptionKey: unboxErrorMessage])
+    }
+}
+
 /**
 Unboxing NSManagedObjects into Value types.
 
@@ -25,40 +34,33 @@ Unboxing NSManagedObjects into Value types.
 
 // monadic operators
 infix operator <^> { associativity left precedence 130 }
-infix operator <*> { associativity left precedence 130 }
 
 // pull value/s from nsmanagedobject
 infix operator <| { associativity left precedence 150 }
 infix operator <|| { associativity left precedence 150 }
 infix operator <|? { associativity left precedence 150 }
 
-public func <^> <A, B>(f: A -> B, a: Unboxed<A>) -> Unboxed<B> {
-    return a.map(f)
+public func <^> <A, B>(f: ((A) throws -> B), a: A) rethrows -> B {
+    return try f(a)
 }
 
-public func <*> <A, B>(f: Unboxed<A -> B>, a: Unboxed<A>) -> Unboxed<B> {
-    return a.apply(f)
-}
-
-public func <| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) -> Unboxed<A> {
+public func <| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) throws -> A {
     if let s = value.valueForKey(key) {
-        return A.unbox(s)
+        return try A.unbox(s)
     }
-    return Unboxed.TypeMismatch("\(key) \(A.self)")
+    throw NSError(unboxErrorMessage: "\(key) \(A.self)")
 }
 
-public func <|? <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) -> Unboxed<A?> {
-    if let s = value.valueForKey(key) {
-            return Unboxed<A?>.Success(A.unbox(s).value)
-    }
-    return Unboxed<A?>.Success(nil)
+public func <|? <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) -> A? {
+    return try? value <| key
 }
 
-public func <|| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) -> Unboxed<[A]> {
+public func <|| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) throws -> [A] {
     if let s = value.valueForKey(key) {
-        return Array<A>.unbox(s)
+        return try Array<A>.unbox(s)
+    } else {
+        throw NSError(unboxErrorMessage: "\(key) \(A.self)")
     }
-    return Unboxed.TypeMismatch("\(key) \(A.self)")
 }
 
 /**
@@ -81,25 +83,6 @@ public enum Unboxed<T> {
 }
 
 /**
-Support for Monadic operations on the Unboxed type
-*/
-public extension Unboxed {
-    func map<U>(f: T -> U) -> Unboxed<U> {
-        switch self {
-        case let .Success(value): return .Success(f(value))
-        case let .TypeMismatch(string): return .TypeMismatch(string)
-        }
-    }
-    
-    func apply<U>(f: Unboxed<T -> U>) -> Unboxed<U> {
-        switch f {
-        case let .Success(value): return value <^> self
-        case let .TypeMismatch(string): return .TypeMismatch(string)
-        }
-    }
-}
-
-/**
 The *Unboxing* protocol
 The *unbox* function recieves a Core Data object and returns an unboxed value type. This value type
 is defined by the StructureType typealias
@@ -110,7 +93,7 @@ public protocol Unboxing {
     Unbox a data from an NSManagedObject instance (or the instance itself) into a value type
     - parameter value: The data to be unboxed into a value type
     */
-    static func unbox(value: AnyObject) -> Unboxed<StructureType>
+    static func unbox(value: AnyObject) throws -> StructureType
 }
 
 // MARK: -
@@ -209,15 +192,17 @@ public protocol UnboxingStruct : Unboxing {
     
     - parameter object: The NSManagedObject that should be converted to an instance of self
     */
-    static func fromObject(object: NSManagedObject) -> Unboxed<Self>
+    static func fromObject(object: NSManagedObject) throws -> Self
 }
 
 extension UnboxingStruct {
-    public static func unbox<A: UnboxingStruct where A==A.StructureType>(value: AnyObject) -> Unboxed<A> {
-        if let v = value as? NSManagedObject {
-            return A.fromObject(v)
+    public static func unbox<A: UnboxingStruct where A == A.StructureType>(value: AnyObject) throws -> A {
+        switch value {
+            case let object as NSManagedObject:
+                return try A.fromObject(object)
+        default:
+            throw NSError(unboxErrorMessage: "\(value) is not NSManagedObject")
         }
-        return Unboxed.TypeMismatch("\(value) is not NSManagedObject")
     }
 }
 
@@ -262,42 +247,23 @@ For a first release, this should do though.
 */
 extension BoxingStruct {
     
-    public static func query<T: UnboxingStruct>(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: Array<NSSortDescriptor>) -> Array<T> {
+    public static func query<T: UnboxingStruct>(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: [NSSortDescriptor]? = nil) throws -> Array<T> {
         let fetchRequest = NSFetchRequest(entityName: self.EntityName)
-        
-        fetchRequest.sortDescriptors = sortDescriptors
+
+        if let sortDescriptors = sortDescriptors {
+            fetchRequest.sortDescriptors = sortDescriptors
+        }
         
         if let p = predicate {
             fetchRequest.predicate = p
         }
-        
-        do {
-            let fetchResults = try context.executeFetchRequest(fetchRequest)
-            var results: [T] = []
-            for result in fetchResults {
-                if let result = result as? NSManagedObject {
-                    let valueBox = T.fromObject(result)
-                    switch valueBox {
-                    case .Success(let value):
-                        results.append(value)
-                    case .TypeMismatch(let message):
-                        // FIXME: if unboxing fails here, we ought to inform the user instead of
-                        // just blindly returning the empty array. Right now we'll just print
-                        // but once querying is improved, we should do something better
-                        print("Could not unbox: \(message)")
-                    }
-                }
-            }
-            return results
-        } catch let error {
-            print("Could not fetch, error: \(error)")
-            return []
+
+        let fetchResults = try context.executeFetchRequest(fetchRequest)
+        return try fetchResults.map { obj in
+            try T.fromObject(obj as! NSManagedObject)
         }
     }
-    
-    public static func query<T: UnboxingStruct>(context: NSManagedObjectContext, predicate: NSPredicate?) -> Array<T> {
-        return self.query(context, predicate: predicate, sortDescriptors: Array<NSSortDescriptor>())
-    }
+
 }
 
 // MARK: -
@@ -310,8 +276,8 @@ extension BoxingStruct {
 NSManagedObject already contains implementations for unbox and box
 */
 extension NSManagedObject: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<NSManagedObject> {
-        return Unboxed.Success(value as! NSManagedObject)
+    public static func unbox(value: AnyObject) -> NSManagedObject {
+        return value as! NSManagedObject
     }
     public func box(object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
@@ -319,8 +285,8 @@ extension NSManagedObject: Unboxing, Boxing {
 }
 
 extension NSManagedObjectID: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<NSManagedObjectID> {
-        return Unboxed.Success(value as! NSManagedObjectID)
+    public static func unbox(value: AnyObject) -> NSManagedObjectID {
+        return value as! NSManagedObjectID
     }
     public func box(object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
@@ -338,41 +304,37 @@ type constraints.
 */
 // <T: Unboxing where T == T.StructureType>
 extension Array {
-    public static func unbox<T: Unboxing where T == T.StructureType>(value: AnyObject) -> Unboxed<[T]> {
+    public static func unbox<T: Unboxing where T == T.StructureType>(value: AnyObject) throws -> [T] {
         switch value {
         case let orderedSet as NSOrderedSet:
-            var container: [T] = []
-            // Each entry has to be unboxed seperately and then the unboxed
-            // value will be in an 'Unboxed' array. Also, unboxing may always fail,
-            // which is why we have to check it via an if let
-            for boxedEntry in orderedSet {
-                if let value = T.unbox(boxedEntry).value {
-                    container.append(value)
-                }
-            }
-            return Unboxed.Success(container)
-        default: return Unboxed.TypeMismatch("Array")
+            return try orderedSet.map { try T.unbox($0) }
+        default:
+            throw NSError(unboxErrorMessage: "Array")
         }
     }
 }
 
 extension Int: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<Int> {
+    public static func unbox(value: AnyObject) throws -> Int {
         switch value {
-        case let v as NSNumber: return Unboxed.Success(v.integerValue)
-        default: return Unboxed.TypeMismatch("Int")
+        case let v as Int:
+            return v
+        default:
+            throw NSError(unboxErrorMessage: "Int")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
-        object.setValue(NSNumber(integer: self), forKey: withKey)
+        object.setValue(self, forKey: withKey)
     }
 }
 
 extension Int16: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<Int16> {
+    public static func unbox(value: AnyObject) throws -> Int16 {
         switch value {
-        case let v as NSNumber: return Unboxed.Success(Int16(v.intValue))
-        default: return Unboxed.TypeMismatch("Int16")
+        case let v as NSNumber:
+            return v.shortValue
+        default:
+            throw NSError(unboxErrorMessage: "Int16")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -381,10 +343,12 @@ extension Int16: Unboxing, Boxing {
 }
 
 extension Int32: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<Int32> {
+    public static func unbox(value: AnyObject) throws -> Int32 {
         switch value {
-        case let v as NSNumber: return Unboxed.Success(Int32(v.intValue))
-        default: return Unboxed.TypeMismatch("Int32")
+        case let v as NSNumber:
+            return v.intValue
+        default:
+            throw NSError(unboxErrorMessage: "Int32")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -393,10 +357,12 @@ extension Int32: Unboxing, Boxing {
 }
 
 extension Int64: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<Int64> {
+    public static func unbox(value: AnyObject) throws -> Int64 {
         switch value {
-        case let v as NSNumber: return Unboxed.Success(Int64(v.longLongValue))
-        default: return Unboxed.TypeMismatch("Int64")
+        case let v as NSNumber:
+            return v.longLongValue
+        default:
+            throw NSError(unboxErrorMessage: "Int64")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -405,10 +371,12 @@ extension Int64: Unboxing, Boxing {
 }
 
 extension Double: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<Double> {
+    public static func unbox(value: AnyObject) throws -> Double {
         switch value {
-        case let v as NSNumber: return Unboxed.Success(v.doubleValue)
-        default: return Unboxed.TypeMismatch("Double")
+        case let v as NSNumber:
+            return v.doubleValue
+        default:
+            throw NSError(unboxErrorMessage: "Double")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -417,10 +385,10 @@ extension Double: Unboxing, Boxing {
 }
 
 extension Float: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<Float> {
+    public static func unbox(value: AnyObject) throws -> Float {
         switch value {
-        case let v as NSNumber: return Unboxed.Success(v.floatValue)
-        default: return Unboxed.TypeMismatch("Float")
+        case let v as NSNumber: return v.floatValue
+        default: throw NSError(unboxErrorMessage: "Float")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -429,10 +397,10 @@ extension Float: Unboxing, Boxing {
 }
 
 extension Bool: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<Bool> {
+    public static func unbox(value: AnyObject) throws -> Bool {
         switch value {
-        case let v as NSNumber: return Unboxed.Success(v.boolValue)
-        default: return Unboxed.TypeMismatch("Boolean")
+        case let v as NSNumber: return v.boolValue
+        default: throw NSError(unboxErrorMessage: "Boolean")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -441,10 +409,10 @@ extension Bool: Unboxing, Boxing {
 }
 
 extension String: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<String> {
+    public static func unbox(value: AnyObject) throws -> String {
         switch value {
-        case let v as String: return Unboxed.Success(v)
-        default: return Unboxed.TypeMismatch("String")
+        case let v as String: return v
+        default: throw NSError(unboxErrorMessage: "String")
         }
     }
     public func box(object: NSManagedObject, withKey: String) throws {
@@ -453,11 +421,13 @@ extension String: Unboxing, Boxing {
 }
 
 extension NSData: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<NSData> {
-        if let s = value as? NSData {
-            return Unboxed.Success(s)
+    public static func unbox(value: AnyObject) throws -> NSData {
+        switch value {
+        case let data as NSData:
+            return data
+        default:
+            throw NSError(unboxErrorMessage: "NSData")
         }
-        return Unboxed.TypeMismatch("NSData")
     }
     public func box(object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
@@ -465,11 +435,13 @@ extension NSData: Unboxing, Boxing {
 }
 
 extension NSDate: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<NSDate> {
-        if let s = value as? NSDate {
-            return Unboxed.Success(s)
+    public static func unbox(value: AnyObject) throws -> NSDate {
+        switch value {
+        case let date as NSDate:
+            return date
+        default:
+            throw NSError(unboxErrorMessage: "NSDate")
         }
-        return Unboxed.TypeMismatch("NSDate")
     }
     public func box(object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
@@ -477,11 +449,13 @@ extension NSDate: Unboxing, Boxing {
 }
 
 extension NSDecimalNumber: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> Unboxed<NSDecimalNumber> {
-        if let s = value as? NSDecimalNumber {
-            return Unboxed.Success(s)
+    public static func unbox(value: AnyObject) throws -> NSDecimalNumber {
+        switch value {
+        case let number as NSDecimalNumber:
+            return number
+        default:
+            throw NSError(unboxErrorMessage: "NSDecimalNumber")
         }
-        return Unboxed.TypeMismatch("NSDecimalNumber")
     }
     public func box(object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)

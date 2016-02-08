@@ -137,6 +137,7 @@
 				4D5912591B4989FB0022506E /* Products */,
 			);
 			sourceTree = "<group>";
+			usesTabs = 0;
 		};
 		4D5912591B4989FB0022506E /* Products */ = {
 			isa = PBXGroup;
