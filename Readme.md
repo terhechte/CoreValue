@@ -362,7 +362,7 @@ Then run `pod install` with CocoaPods 0.36 or newer.
 Add the following to your Cartfile:
 
 ```
-github "terhechte/CoreValue" ~> 0.1.3
+github "terhechte/CoreValue" ~> 0.1.5
 ```
 
 Then run `carthage update`.
@@ -392,6 +392,14 @@ Benedikt Terhechte
 [Appventure.me](http://appventure.me)
 
 ## Changelog
+
+### Version 0.1.5
+- Made `CVManagedPersistentStruct` public
+- Fixed issue with empty collections
+
+### Version 0.1.4
+Included pull request from AlexanderKaraberov which
+includes a fix to the delete function
 
 ### Version 0.1.3
 Updated to most recent Swift 2.0 b4 changes
