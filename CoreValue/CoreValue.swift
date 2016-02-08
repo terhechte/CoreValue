@@ -239,13 +239,13 @@ protocol CVManagedStruct : BoxingStruct, UnboxingStruct {
 */
 public typealias _CVManagedStruct = protocol<BoxingStruct, UnboxingStruct>
 
-protocol CVManagedStruct : _CVManagedStruct {
+public protocol CVManagedStruct : _CVManagedStruct {
     typealias StructureType = Self
 }
 
 public typealias _CVManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
 
-protocol CVManagedPersistentStruct : _CVManagedPersistentStruct {
+public protocol CVManagedPersistentStruct : _CVManagedPersistentStruct {
     typealias StructureType = Self
 }
 
