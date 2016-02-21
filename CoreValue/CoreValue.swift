@@ -552,10 +552,37 @@ public extension BoxingPersistentStruct {
         
         return true
     }
-    
-    mutating func save(context: NSManagedObjectContext) throws {
+
+    /**
+     Default implementation of save function since Swift Structs can't have inheritance we have to do this by this way.
+     */
+    mutating func defaultSave(context: NSManagedObjectContext) throws {
         try self.mutatingToObject(context)
     }
+
+    /**
+     Point to override when saving nested collection, call .defaultSave method to perform original saving.
+     
+     Example:
+        mutating func save(context: NSManagedObjectContext) throws {
+            try self.someArray.saveAll(context)
+            try self.defaultSave(context)
+        }
+     */
+    mutating func save(context: NSManagedObjectContext) throws {
+        try self.defaultSave(context)
+    }
+}
+
+public extension Array where Element: BoxingPersistentStruct {
+    /**
+     Saves all persistant structs to context
+     */
+    mutating func saveAll(context: NSManagedObjectContext) throws {
+        for (idx, _) in enumerate() {
+            try self[idx].save(context)
+        }
+     }
 }
 
 private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?, result: NSManagedObject, entity: T) throws -> NSManagedObject {
@@ -603,11 +630,17 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
                             objects.append(try boxedValue.toObject(context))
                         }
                     }
+
+                    let orderedSet = NSOrderedSet(array: objects)
                     
-                    if objects.count > 0 {
-                        let mutableValue = result.mutableOrderedSetValueForKey(label)
-                        mutableValue.addObjectsFromArray(objects)
+                    let mutableValue = result.mutableOrderedSetValueForKey(label)
+                    if objects.count == 0 {
+                        mutableValue.removeAllObjects()
+                    } else {
+                        mutableValue.intersectOrderedSet(orderedSet) // removes objects that are not in new array
+                        mutableValue.unionOrderedSet(orderedSet) // adds new objects
                     }
+
                 default:
                     // If we end up here, we were unable to decode it
                     throw CVManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
