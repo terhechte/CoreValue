@@ -114,7 +114,7 @@ struct Car: CVManagedPersistentStruct {
 }
 
 /// Attempt f, fail test if it throws
-private func testTry(@noescape f: () throws -> ()) {
+func testTry(@noescape f: () throws -> ()) {
     do {
         try f()
     } catch let error as NSError {
