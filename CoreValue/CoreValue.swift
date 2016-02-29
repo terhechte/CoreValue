@@ -462,6 +462,23 @@ extension NSDecimalNumber: Unboxing, Boxing {
     }
 }
 
+public extension Boxing where Self: RawRepresentable, Self.RawValue :Boxing {
+    func box(object: NSManagedObject, withKey: String) throws {
+        return try self.rawValue.box(object, withKey: withKey)
+    }
+}
+
+public extension Unboxing where Self.StructureType == Self, Self: RawRepresentable, Self.RawValue :Unboxing {
+    static func unbox(value: AnyObject) throws -> StructureType {
+        let rawValue = try Self.RawValue.unbox(value)
+        if let r = rawValue as? Self.RawValue, enumValue = self.init(rawValue: r) {
+            return enumValue
+        }
+        
+        throw NSError(unboxErrorMessage: "\(self.dynamicType)")
+    }
+}
+
 // MARK: -
 // MARK: Reflection Support
 

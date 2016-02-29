@@ -91,6 +91,28 @@ struct StoredShop: CVManagedPersistentStruct {
     }
 }
 
+enum CarType:String{
+    case Pickup = "pickup"
+    case Sedan = "sedan"
+    case Hatchback = "hatchback"
+}
+
+extension CarType: Boxing,Unboxing {}
+
+struct Car: CVManagedPersistentStruct {
+    static let EntityName = "Car"
+    var objectID: NSManagedObjectID?
+    var name: String
+    var type: CarType
+    
+    static func fromObject(o: NSManagedObject) throws -> Car {
+        return try curry(self.init)
+            <^> o <|? "objectID"
+            <^> o <| "name"
+            <^> o <| "type"
+    }
+}
+
 /// Attempt f, fail test if it throws
 private func testTry(@noescape f: () throws -> ()) {
     do {
@@ -378,6 +400,25 @@ class CoreValueMacTests: XCTestCase {
         } catch let e {
             print(e)
             XCTAssert(false, "An Error Occured")
+        }
+    }
+    
+    func testRawRepresentableToCoreData() {
+        let car1 = Car(objectID: nil, name: "Super Sedan", type: .Sedan)
+        do {
+           let cd = try car1.toObject(context)
+            if (cd.valueForKey("type") as! String) != CarType.Sedan.rawValue {
+                XCTAssert(false, "Boxing failed: Raw Represantable String")
+            }
+            
+            let obj:Car = try Car.unbox(cd)
+            
+            if (obj.type != .Sedan) {
+                XCTAssert(false, "Unboxing failed: Raw Represantable String")
+            }
+            
+        } catch let e {
+            XCTAssert(false, "\(e)")
         }
     }
 }
