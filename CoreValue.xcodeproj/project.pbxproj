@@ -47,7 +47,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		2F13B6DD1C79EF000099947C /* CollectionTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionTests.swift; sourceTree = "<group>"; };
+		2F13B6DD1C79EF000099947C /* CollectionTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CollectionTests.swift; path = CoreValueMacTests/CollectionTests.swift; sourceTree = "<group>"; };
 		4D2680251B4C5091001F8D35 /* CoreValueTests.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; name = CoreValueTests.xcdatamodel; path = CoreValueMacTests/CoreValueTests.xcdatamodel; sourceTree = "<group>"; };
 		4D391F271B5404ED00C66C90 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/CoreData.framework; sourceTree = DEVELOPER_DIR; };
 		4D5912581B4989FB0022506E /* CoreValue.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CoreValue.framework; sourceTree = BUILT_PRODUCTS_DIR; };
