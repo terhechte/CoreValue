@@ -247,21 +247,26 @@ For a first release, this should do though.
 */
 extension BoxingStruct {
     
-    public static func query<T: UnboxingStruct>(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: [NSSortDescriptor]? = nil) throws -> Array<T> {
-        let fetchRequest = NSFetchRequest(entityName: self.EntityName)
-
-        if let sortDescriptors = sortDescriptors {
-            fetchRequest.sortDescriptors = sortDescriptors
-        }
-        
-        if let p = predicate {
-            fetchRequest.predicate = p
-        }
-
-        let fetchResults = try context.executeFetchRequest(fetchRequest)
-        return try fetchResults.map { obj in
-            try T.fromObject(obj as! NSManagedObject)
-        }
+    public static func query<T: UnboxingStruct>(context: NSManagedObjectContext,
+        predicate: NSPredicate?,
+        sortDescriptors: [NSSortDescriptor]? = nil) throws -> Array<T> {
+            
+            let fetchRequest = NSFetchRequest(entityName: self.EntityName)
+            
+            if let sortDescriptors = sortDescriptors {
+                fetchRequest.sortDescriptors = sortDescriptors
+            }
+            
+            // We need to process (i.e. convert) all objects at once, so there shouldn't
+            // be any faults.
+            fetchRequest.returnsObjectsAsFaults = false
+            
+            fetchRequest.predicate = predicate
+            
+            let fetchResults = try context.executeFetchRequest(fetchRequest)
+            return try fetchResults.map { obj in
+                try T.fromObject(obj as! NSManagedObject)
+            }
     }
 
 }
