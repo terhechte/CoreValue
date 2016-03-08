@@ -25,9 +25,9 @@ Unboxing NSManagedObjects into Value types.
 
 - Unboxing can fail, so the unboxed value is an either type that explains the error via TypeMismatch
 - Unboxing cannot utilize the Swift or the NSManagedObject reflection mechanisms as both are too
-  dynamic for Swift's typechecker. So we utilize custom operators and curryed object construction
+  dynamic for Swift's typechecker. So we utilize custom operators and curried object construction
   like in Argo (https://github.com/thoughtbot/Argo) which is also where the gists for the unboxing
-  code originates from
+  code originates from.
 - Unboxing defines the 'Unboxing' protocol which a type has to conform to in order to be able
   to be unboxed
 */
@@ -302,7 +302,6 @@ type constraints.
 
 - Currently, there's no support for NSSet
 */
-// <T: Unboxing where T == T.StructureType>
 extension Array {
     public static func unbox<T: Unboxing where T == T.StructureType>(value: AnyObject) throws -> [T] {
         switch value {
@@ -468,7 +467,7 @@ public extension Boxing where Self: RawRepresentable, Self.RawValue :Boxing {
     }
 }
 
-public extension Unboxing where Self.StructureType == Self, Self: RawRepresentable, Self.RawValue :Unboxing {
+public extension Unboxing where Self.StructureType == Self, Self: RawRepresentable, Self.RawValue: Unboxing {
     static func unbox(value: AnyObject) throws -> StructureType {
         let rawValue = try Self.RawValue.unbox(value)
         if let r = rawValue as? Self.RawValue, enumValue = self.init(rawValue: r) {
@@ -571,7 +570,7 @@ public extension BoxingPersistentStruct {
     }
 
     /**
-     Default implementation of save function since Swift Structs can't have inheritance we have to do this by this way.
+     Default implementation of save function since Swift Structs can't have inheritance.
      */
     mutating func defaultSave(context: NSManagedObjectContext) throws {
         try self.mutatingToObject(context)
