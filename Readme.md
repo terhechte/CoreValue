@@ -365,7 +365,7 @@ Then run `pod install` with CocoaPods 0.36 or newer.
 Add the following to your Cartfile:
 
 ```
-github "terhechte/CoreValue" ~> 0.1.6
+github "terhechte/CoreValue" ~> 0.2.0
 ```
 
 Then run `carthage update`.
