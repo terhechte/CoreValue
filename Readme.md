@@ -41,7 +41,7 @@ The following struct supports boxing, unboxing, and keeping object state:
 	    
 	    // Create a Value Type from a NSManagedObject
 	    // If this looks too complex, see below for an explanation and alternatives
-	    static func fromObject(o: NSManagedObject) -> Unboxed<Shop> {
+	    static func fromObject(o: NSManagedObject) throws -> Shop {
 	        return curry(self.init)
 	            <^> o <|? "objectID"
 	            <*> o <| "name"
@@ -75,7 +75,7 @@ That's it. Everything else it automated from here. Here're some examples of what
 	aShop.delete(self.context)
 	
 	// Convert a managed object into a shop (see below)
-	let nsShop: Shop? = Shop.fromObject(aNSManagedObject).value
+	let nsShop: Shop? = try? Shop.fromObject(aNSManagedObject)
 	
 	// Convert a shop into an nsmanagedobject
 	let shopObj = nsShop.mutatingToObject(self.context)
@@ -181,26 +181,26 @@ In CoreValue, `boxed` refers to values in an NSManagedObject container. I.e. NSN
 struct Counter : UnboxingStruct
 	var count: Int
 	let name: String
-	static func fromObject(object: NSManagedObject) -> Unboxed<Counter> {
-	return Unboxed.Success(Counter(count: object.valueForKey("count")!.integerValue,
-           name: object.valueForKey("name") as? String!))
+	static func fromObject(object: NSManagedObject) throws -> Counter {
+	return Counter(count: object.valueForKey("count")!.integerValue,
+           name: object.valueForKey("name") as! String)
 	}
 }
 ```
 
-Even though this example is not safe, we can observe several things from it. First, the implementation overhead is minimal. Second, we're not returning a Counter value, but instead the `Unboxed<Counter>` enum. That's because unboxing can fail in a multitude of ways (wrong value, no value, wrong entity, unknown entity, etc). If unboxing fails in any way, we should return `Unboxed.TypeMismatch(...)`. The other benefit of using `Unboxed` is, that it allows us to take an unboxing shortcut (which CoreValue deviously copied from [Argo](https://github.com/thoughtbot/Argo)). Utilizing several custom operators, the unboxing process can be greatly simplified:
+Even though this example is not safe, we can observe several things from it. First, the implementation overhead is minimal. Second, the method can throw an error. That's because unboxing can fail in a multitude of ways (wrong value, no value, wrong entity, unknown entity, etc). If unboxing fails in any way, we throw an `NSError`. The other benefit of unboxing, that it allows us to take a shortcut (which CoreValue deviously copied from [Argo](https://github.com/thoughtbot/Argo)). Utilizing several custom operators, the unboxing process can be greatly simplified:
 
 ``` Swift
 struct Counter : UnboxingStruct
 	var count: Int
 	let name: String
-	static func fromObject(object: NSManagedObject) -> Unboxed<Counter> {
+	static func fromObject(object: NSManagedObject) throws -> Counter {
 		return curry(self.init) <^> object <| "count" <*> object <| "name"
 	}
 }
 ```
 
-This code takes the automatic initializer, curries it and maps it over multiple incarnations of unboxing functions (`<|`) until it can return a Unboxed<Counter>. As a very neat side effect, if any of the unboxing operations fail, it will automatically return `Unboxed.TypeMismatch` and tell you specifically which decoding failed. Even better, all this is type checked, so if you accidentally try to decode an optional value into an array, the type checker will note it.
+This code takes the automatic initializer, curries it and maps it over multiple incarnations of unboxing functions (`<|`) until it can return a Counter (or throw an error).
 
 But what about these weird runes? Here's an in-detail overview of what's happening here:
 
@@ -236,41 +236,44 @@ Custom Operators are observed as a critical Swift feature, and rightly so. Too m
  <\|\| |  Unbox a set/list of values (i.e. var shops: [Shops])
  <\|?  |  Unbox an optional value (i.e. var shop: Shop?)
 
-### Unboxed
-
-Finally, the Unboxed enum looks like this:
-
-``` Swift
-public enum Unboxed<T> {
-    case Success(T)
-    case TypeMismatch(String)
-    
-    public var value: T?
-    }
-```
-
-You can pattern match for `.Success`, or try to unwrap `value` in order to retrieve the actually unboxed value type:
-
-``` Swift
-switch Shop.fromObject(managedObject) {
-  case .Success(let value):
-    print(value.name)
-  case .TypeMismatch(let error):
-    print(error)
-}
-```
-
-
 ### CVManagedStruct
 
 Since most of the time you probably want boxing and unboxing functionality, CoreValue includes two handy type aliases, `CVManagedStruct` and `CVManagedPersistentStruct` which contain Boxing and Unboxing in one type.
 
+### `RawRepresentable` Enum support
+
+By extending `RawRepresentable`, you can use Swift `enums` right away without having to first make sure your enum conforms to `CVManagedStruct`.
+
+```
+enum CarType:String{
+    case Pickup = "pickup"
+    case Sedan = "sedan"
+    case Hatchback = "hatchback"
+}
+
+extension CarType: Boxing,Unboxing {}
+ 
+ struct Car: CVManagedPersistentStruct {
+     static let EntityName = "Car"
+     var objectID: NSManagedObjectID?
+     var name: String
+     var type: CarType
+     
+     static func fromObject(o: NSManagedObject) throws -> Car {
+         return try curry(self.init)
+             <^> o <|? "objectID"
+             <^> o <| "name"
+             <^> o <| "type"
+     }
+}
+```
+
 ## Docs
-(Coming, have a look at [CoreValue.swift](https://github.com/terhechte/CoreValue/blob/master/CoreValue/CoreValue.swift), it's full of docstrings)
+Have a look at [CoreValue.swift](https://github.com/terhechte/CoreValue/blob/master/CoreValue/CoreValue.swift), it's full of docstrings
 
 Alternatively, there's a lot of usage in the [Unit Tests](https://github.com/terhechte/CoreValue/blob/master/CoreValueMacTests/CoreValueTests.swift).
 
-Meanwhile, here's a  more complex example of CoreValue in use:
+Here's a  more complex example of CoreValue in use:
 
 ``` Swift
 struct Employee : CVManagedPersistentStruct {
@@ -285,7 +288,7 @@ struct Employee : CVManagedPersistentStruct {
     let department: String
     let job: String
     
-    static func fromObject(o: NSManagedObject) -> Unboxed<Employee> {
+    static func fromObject(o: NSManagedObject) throws -> Employee {
         return curry(self.init)
             <^> o <| "objectID"
             <*> o <| "name"
@@ -305,7 +308,7 @@ struct Shop: CVManagedPersistentStruct {
     var age: Int16
     var employees: [Employee]
     
-    static func fromObject(o: NSManagedObject) -> Unboxed<Shop> {
+    static func fromObject(o: NSManagedObject) throws -> Shop {
         return curry(self.init)
             <^> o <| "objectID"
             <*> o <| "age"
@@ -393,6 +396,12 @@ Benedikt Terhechte
 
 ## Changelog
 
+### Version 0.2.0
+- Switched Error Handling from `Unboxed` to Swift's native `throw`. Big thanks to [Adlai Holler](https://github.com/Adlai-Holler) for spearheading this!
+- Huge Performance improvements: Boxing is roughly 80% faster and Unboxing is roughly 90% faster
+- Improved support for nested collections thanks to [Roman Kříž](https://github.com/samnung).
+- RawRepresentable support (see documentation above) thanks to [tkohout](https://github.com/tkohout)
+
 ### Version 0.1.6
 - Made `CVManagedPersistentStruct` public
 - Fixed issue with empty collections
@@ -433,6 +442,4 @@ The CoreValue source code is available under the MIT License.
 - [ ] support transformable: https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/CoreData/Articles/cdNSAttributes.html
 - [ ] add jazzy for docs and update headers to have proper docs
 - [ ] document multi threading support via objectID
-- [ ] add fetchRequest support to batch get nsmanagedobjects for an array of value types in a quicker way
-- [ ] add more unit tests and clean up the current incarnation
 
