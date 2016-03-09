@@ -29,6 +29,30 @@ struct Employee : CVManagedStruct {
     }
 }
 
+struct StoredShopEmployee : CVManagedPersistentStruct {
+    
+    static let EntityName = "Employee"
+    
+    var objectID: NSManagedObjectID?
+    let name: String
+    let age: Int16
+    let position: String?
+    let department: String
+    let job: String
+    let shop: StoredShop?
+    
+    static func fromObject(o: NSManagedObject) throws -> StoredShopEmployee {
+        return try curry(self.init)
+            <^> o <|? "objectID"
+            <^> o <| "name"
+            <^> o <| "age"
+            <^> o <|? "position"
+            <^> o <| "department"
+            <^> o <| "job"
+            <^> o <|? "shop"
+    }
+}
+
 struct Shop: CVManagedStruct {
     static let EntityName = "Shop"
     
@@ -88,6 +112,21 @@ struct StoredShop: CVManagedPersistentStruct {
             <^> o <|? "objectID"
             <^> o <| "name"
             <^> o <| "owner"
+    }
+}
+
+struct StoredEmployeeShop: CVManagedPersistentStruct {
+    static let EntityName = "Shop"
+    
+    var objectID: NSManagedObjectID?
+    var name: String
+    var employees: [StoredShopEmployee]
+    
+    static func fromObject(o: NSManagedObject) throws -> StoredEmployeeShop {
+        return try curry(self.init)
+            <^> o <|? "objectID"
+            <^> o <| "name"
+            <^> o <|| "employees"
     }
 }
 
@@ -537,6 +576,17 @@ class CoreValueQueryTests: XCTestCase {
             let results: [StoredShop] = try StoredShop.query(self.context, predicate: nil)
             XCTAssert(results.count == 1, "Failed to delete object \(s2) from context")
         }
+    }
+    
+    func testInfiniteLoop() {
+        let employee = StoredShopEmployee(objectID: nil, name: "John Doe", age: 18, position: "Clerk", department: "Carpet", job: "Cleaner", shop:nil)
+        var shop = StoredEmployeeShop(objectID: nil, name: "Carpet shop", employees: [employee])
+        
+        try! shop.save(context)
+        //Will crash in infinite loop
+        let shops:[StoredEmployeeShop] = try! StoredEmployeeShop.query(context, predicate: nil)
+        print(shops)
+        XCTAssertNotNil(shops)
     }
 }
 
