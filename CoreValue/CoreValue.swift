@@ -88,7 +88,7 @@ The *unbox* function recieves a Core Data object and returns an unboxed value ty
 is defined by the StructureType typealias
 */
 public protocol Unboxing {
-    typealias StructureType = Self
+    associatedtype StructureType = Self
     /**
     Unbox a data from an NSManagedObject instance (or the instance itself) into a value type
     - parameter value: The data to be unboxed into a value type
@@ -225,13 +225,13 @@ protocol CVManagedStruct : BoxingStruct, UnboxingStruct {
 public typealias _CVManagedStruct = protocol<BoxingStruct, UnboxingStruct>
 
 public protocol CVManagedStruct : _CVManagedStruct {
-    typealias StructureType = Self
+    associatedtype StructureType = Self
 }
 
 public typealias _CVManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
 
 public protocol CVManagedPersistentStruct : _CVManagedPersistentStruct {
-    typealias StructureType = Self
+    associatedtype StructureType = Self
 }
 
 // MARK: Querying
