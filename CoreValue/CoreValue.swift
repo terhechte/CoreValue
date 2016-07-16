@@ -642,7 +642,6 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
                     result.setValue(nil, forKey: label)
                     // Optional with Value
                 case (.Optional?, let child?):
-                    result.setValue(child.value as? AnyObject, forKey: label)
                     let optionalMirror: Mirror = Mirror(reflecting: child.value)
                     
                     switch (optionalMirror.displayStyle, optionalMirror.children.first) {
@@ -679,9 +678,14 @@ private func internalCollectionToSet(context: NSManagedObjectContext?, result: N
         }
     }
     
-    if objects.count > 0 {
-        let mutableValue = result.mutableOrderedSetValueForKey(label)
-        mutableValue.addObjectsFromArray(objects)
+    let orderedSet = NSOrderedSet(array: objects)
+    
+    let mutableValue = result.mutableOrderedSetValueForKey(label)
+    if objects.count == 0 {
+        mutableValue.removeAllObjects()
+    } else {
+        mutableValue.intersectOrderedSet(orderedSet) // removes objects that are not in new array
+        mutableValue.unionOrderedSet(orderedSet) // adds new objects
     }
 }
 
