@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="9525" systemVersion="15B42" minimumToolsVersion="Automatic">
+<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="10174" systemVersion="15B42" minimumToolsVersion="Automatic">
     <entity name="Car" syncable="YES">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="type" optional="YES" attributeType="String" syncable="YES"/>
@@ -26,15 +26,22 @@
         <attribute name="float" optional="YES" attributeType="Float" defaultValueString="0.0" syncable="YES"/>
         <attribute name="transformable" optional="YES" attributeType="Transformable" syncable="YES"/>
     </entity>
+    <entity name="Product" syncable="YES">
+        <attribute name="color" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="shop" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Shop" inverseName="products" inverseEntity="Shop" syncable="YES"/>
+    </entity>
     <entity name="Shop" syncable="YES">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
         <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" ordered="YES" destinationEntity="Employee" inverseName="shop" inverseEntity="Employee" syncable="YES"/>
+        <relationship name="products" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Product" inverseName="shop" inverseEntity="Product" syncable="YES"/>
     </entity>
     <elements>
+        <element name="Car" positionX="-45" positionY="54" width="128" height="75"/>
         <element name="Company" positionX="-54" positionY="36" width="128" height="75"/>
         <element name="Employee" positionX="-63" positionY="-18" width="128" height="150"/>
         <element name="Other" positionX="-54" positionY="36" width="128" height="30"/>
-        <element name="Shop" positionX="-54" positionY="27" width="128" height="75"/>
-        <element name="Car" positionX="-45" positionY="54" width="128" height="75"/>
+        <element name="Shop" positionX="-54" positionY="27" width="128" height="90"/>
+        <element name="Product" positionX="-54" positionY="45" width="128" height="90"/>
     </elements>
 </model>
