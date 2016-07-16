@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2F13B6DF1C79EF3D0099947C /* CollectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F13B6DD1C79EF000099947C /* CollectionTests.swift */; };
+		2F13B6E01C79EF3E0099947C /* CollectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F13B6DD1C79EF000099947C /* CollectionTests.swift */; };
 		4D2680261B4C5091001F8D35 /* CoreValueTests.xcdatamodel in Sources */ = {isa = PBXBuildFile; fileRef = 4D2680251B4C5091001F8D35 /* CoreValueTests.xcdatamodel */; };
 		4D391F251B5404C300C66C90 /* CoreValueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D59128F1B498AFA0022506E /* CoreValueTests.swift */; };
 		4D391F261B5404CE00C66C90 /* CoreValueTests.xcdatamodel in Sources */ = {isa = PBXBuildFile; fileRef = 4D2680251B4C5091001F8D35 /* CoreValueTests.xcdatamodel */; };
@@ -45,6 +47,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2F13B6DD1C79EF000099947C /* CollectionTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CollectionTests.swift; path = CoreValueMacTests/CollectionTests.swift; sourceTree = "<group>"; };
 		4D2680251B4C5091001F8D35 /* CoreValueTests.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; name = CoreValueTests.xcdatamodel; path = CoreValueMacTests/CoreValueTests.xcdatamodel; sourceTree = "<group>"; };
 		4D391F271B5404ED00C66C90 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/System/Library/Frameworks/CoreData.framework; sourceTree = DEVELOPER_DIR; };
 		4D5912581B4989FB0022506E /* CoreValue.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CoreValue.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -113,6 +116,7 @@
 			children = (
 				4D2680251B4C5091001F8D35 /* CoreValueTests.xcdatamodel */,
 				4D59128F1B498AFA0022506E /* CoreValueTests.swift */,
+				2F13B6DD1C79EF000099947C /* CollectionTests.swift */,
 			);
 			name = Tests;
 			sourceTree = "<group>";
@@ -372,6 +376,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D391F261B5404CE00C66C90 /* CoreValueTests.xcdatamodel in Sources */,
+				2F13B6DF1C79EF3D0099947C /* CollectionTests.swift in Sources */,
 				4D391F251B5404C300C66C90 /* CoreValueTests.swift in Sources */,
 				4D5912741B498A170022506E /* CoreValue.swift in Sources */,
 				4D6AEB9A1B4DEAE100DDD5E1 /* curry.swift in Sources */,
@@ -392,6 +397,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D5912991B498B000022506E /* CoreValue.swift in Sources */,
+				2F13B6E01C79EF3E0099947C /* CollectionTests.swift in Sources */,
 				4D2680261B4C5091001F8D35 /* CoreValueTests.xcdatamodel in Sources */,
 				4D5912901B498AFA0022506E /* CoreValueTests.swift in Sources */,
 				4D6AEB9C1B4DEAE100DDD5E1 /* curry.swift in Sources */,

@@ -25,9 +25,9 @@ Unboxing NSManagedObjects into Value types.
 
 - Unboxing can fail, so the unboxed value is an either type that explains the error via TypeMismatch
 - Unboxing cannot utilize the Swift or the NSManagedObject reflection mechanisms as both are too
-  dynamic for Swift's typechecker. So we utilize custom operators and curryed object construction
+  dynamic for Swift's typechecker. So we utilize custom operators and curried object construction
   like in Argo (https://github.com/thoughtbot/Argo) which is also where the gists for the unboxing
-  code originates from
+  code originates from.
 - Unboxing defines the 'Unboxing' protocol which a type has to conform to in order to be able
   to be unboxed
 */
@@ -88,7 +88,7 @@ The *unbox* function recieves a Core Data object and returns an unboxed value ty
 is defined by the StructureType typealias
 */
 public protocol Unboxing {
-    typealias StructureType = Self
+    associatedtype StructureType = Self
     /**
     Unbox a data from an NSManagedObject instance (or the instance itself) into a value type
     - parameter value: The data to be unboxed into a value type
@@ -225,13 +225,13 @@ protocol CVManagedStruct : BoxingStruct, UnboxingStruct {
 public typealias _CVManagedStruct = protocol<BoxingStruct, UnboxingStruct>
 
 public protocol CVManagedStruct : _CVManagedStruct {
-    typealias StructureType = Self
+    associatedtype StructureType = Self
 }
 
 public typealias _CVManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
 
 public protocol CVManagedPersistentStruct : _CVManagedPersistentStruct {
-    typealias StructureType = Self
+    associatedtype StructureType = Self
 }
 
 // MARK: Querying
@@ -247,21 +247,26 @@ For a first release, this should do though.
 */
 extension BoxingStruct {
     
-    public static func query<T: UnboxingStruct>(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: [NSSortDescriptor]? = nil) throws -> Array<T> {
-        let fetchRequest = NSFetchRequest(entityName: self.EntityName)
-
-        if let sortDescriptors = sortDescriptors {
-            fetchRequest.sortDescriptors = sortDescriptors
-        }
-        
-        if let p = predicate {
-            fetchRequest.predicate = p
-        }
-
-        let fetchResults = try context.executeFetchRequest(fetchRequest)
-        return try fetchResults.map { obj in
-            try T.fromObject(obj as! NSManagedObject)
-        }
+    public static func query<T: UnboxingStruct>(context: NSManagedObjectContext,
+        predicate: NSPredicate?,
+        sortDescriptors: [NSSortDescriptor]? = nil) throws -> Array<T> {
+            
+            let fetchRequest = NSFetchRequest(entityName: self.EntityName)
+            
+            if let sortDescriptors = sortDescriptors {
+                fetchRequest.sortDescriptors = sortDescriptors
+            }
+            
+            // We need to process (i.e. convert) all objects at once, so there shouldn't
+            // be any faults.
+            fetchRequest.returnsObjectsAsFaults = false
+            
+            fetchRequest.predicate = predicate
+            
+            let fetchResults = try context.executeFetchRequest(fetchRequest)
+            return try fetchResults.map { obj in
+                try T.fromObject(obj as! NSManagedObject)
+            }
     }
 
 }
@@ -302,7 +307,6 @@ type constraints.
 
 - Currently, there's no support for NSSet
 */
-// <T: Unboxing where T == T.StructureType>
 extension Array {
     public static func unbox<T: Unboxing where T == T.StructureType>(value: AnyObject) throws -> [T] {
         switch value {
@@ -468,7 +472,7 @@ public extension Boxing where Self: RawRepresentable, Self.RawValue :Boxing {
     }
 }
 
-public extension Unboxing where Self.StructureType == Self, Self: RawRepresentable, Self.RawValue :Unboxing {
+public extension Unboxing where Self.StructureType == Self, Self: RawRepresentable, Self.RawValue: Unboxing {
     static func unbox(value: AnyObject) throws -> StructureType {
         let rawValue = try Self.RawValue.unbox(value)
         if let r = rawValue as? Self.RawValue, enumValue = self.init(rawValue: r) {
@@ -569,10 +573,37 @@ public extension BoxingPersistentStruct {
         
         return true
     }
-    
-    mutating func save(context: NSManagedObjectContext) throws {
+
+    /**
+     Default implementation of save function since Swift Structs can't have inheritance.
+     */
+    mutating func defaultSave(context: NSManagedObjectContext) throws {
         try self.mutatingToObject(context)
     }
+
+    /**
+     Point to override when saving nested collection, call .defaultSave method to perform original saving.
+     
+     Example:
+        mutating func save(context: NSManagedObjectContext) throws {
+            try self.someArray.saveAll(context)
+            try self.defaultSave(context)
+        }
+     */
+    mutating func save(context: NSManagedObjectContext) throws {
+        try self.defaultSave(context)
+    }
+}
+
+public extension Array where Element: BoxingPersistentStruct {
+    /**
+     Saves all persistant structs to context
+     */
+    mutating func saveAll(context: NSManagedObjectContext) throws {
+        for (idx, _) in enumerate() {
+            try self[idx].save(context)
+        }
+     }
 }
 
 private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?, result: NSManagedObject, entity: T) throws -> NSManagedObject {
