@@ -600,13 +600,6 @@ private extension BoxingPersistentStruct {
     }
 }
 
-private extension BoxingUniqueStruct {
-    
-    
-    
-   
-}
-
 public extension BoxingUniqueStruct {
     
     
@@ -706,8 +699,6 @@ public extension Array where Element: BoxingUniqueStruct {
             
             let singlePredicate = try object.identifierPredicate()
             
-            //let resultsWithIdentifier = fetchResults.filter { object.IdentifierValue() as! String == $0.valueForKey(Element.IdentifierName) as! String }
-            
             let resultsWithIdentifier = fetchResults.filter { singlePredicate.evaluateWithObject($0) }
             
             if let fetchedObject = resultsWithIdentifier.first as? NSManagedObject {
@@ -725,7 +716,6 @@ public extension Array where Element: BoxingUniqueStruct {
     
     func saveAll(context: NSManagedObjectContext) throws {
         try self.toObjects(context)
-        //try context.save()
     }
 }
 
