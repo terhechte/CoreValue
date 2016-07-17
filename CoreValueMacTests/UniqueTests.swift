@@ -27,6 +27,12 @@ struct Author : CVManagedUniqueStruct {
             <^> o <| "id"
             <^> o <| "name"
     }
+    
+    //    func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+    //        return try self.managedObject(context)
+    //            |> ("id", self.id)
+    //            |> ("name", self.name)
+    //    }
 }
 
 struct Article: CVManagedUniqueStruct {
@@ -39,7 +45,7 @@ struct Article: CVManagedUniqueStruct {
     var id: Int16
     var text: String
     var author: Author?
-
+    
     
     static func fromObject(o: NSManagedObject) throws -> Article {
         return try curry(self.init)
@@ -47,6 +53,13 @@ struct Article: CVManagedUniqueStruct {
             <^> o <| "text"
             <^> o <|? "author"
     }
+    
+    //    func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+    //        return try self.managedObject(context)
+    //                |> ("id", self.id)
+    //                |> ("text", self.text)
+    //                ?|> ("author", self.author)
+    //    }
 }
 
 struct Category: CVManagedUniqueStruct {
@@ -84,6 +97,14 @@ struct Category: CVManagedUniqueStruct {
             <^> o <| "label"
             <^> o <|| "articles"
     }
+    
+    //    func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+    //        return try self.managedObject(context)
+    //            |> ("id", self.id)
+    //            |> ("type", self.type)
+    //            |> ("label", self.label)
+    //            ||> ("articles", self.articles)
+    //    }
 }
 
 
@@ -129,7 +150,7 @@ class UniqueTests: XCTestCase {
     var manyCategories: [Category] = {
         var box: [Article] = []
         for c in 0..<25 {
-            box.append(Article(id: Int16(c), text: "text_\(c)", author: Author(id: "dfaw87", name: "Dostojevsky")))
+            box.append(Article(id: Int16(c), text: "text_\(c)", author: nil))
         }
         var companyBox: [Category] = []
         for c in 0..<50 {
@@ -139,7 +160,7 @@ class UniqueTests: XCTestCase {
     }()
     
     
-   
+    
     func testUniqueSavingTwoTimes() {
         let s1 = self.category
         
@@ -225,7 +246,7 @@ class UniqueTests: XCTestCase {
         let conflictedId = category.articles[0].id
         let conflictedArticle = Article( id: conflictedId, text: "conflicted_text", author: category.articles[0].author)
         category.articles.append(conflictedArticle)
-
+        
         testTry {
             try category.save(self.context)
         }
@@ -265,51 +286,4 @@ class UniqueTests: XCTestCase {
             }
         }
     }
-    
-    
-//    func testUniqueRemovingItemFromNestedCollection() {
-//        var s1 = self.company
-//        
-//        testTry {
-//            try s1.save(self.context)
-//        }
-//        
-//        let before: [StoredCompany] = try! StoredCompany.query(self.context, predicate: nil)
-//        XCTAssertEqual(before.first?.employees.count, 4)
-//        
-//        s1.employees.removeFirst()
-//        
-//        testTry {
-//            try s1.save(self.context)
-//        }
-//        
-//        let after: [StoredCompany] = try! StoredCompany.query(self.context, predicate: nil)
-//        XCTAssertEqual(after.first?.employees.count, 3)
-//    }
-//    
-//    func testUniqueRemovingAllItemsFromNestedCollection() {
-//        var s1 = self.company
-//        
-//        // save for the first time
-//        testTry {
-//            try s1.save(self.context)
-//        }
-//        
-//        // check the count of employees
-//        let before: [StoredCompany] = try! StoredCompany.query(self.context, predicate: nil)
-//        XCTAssertEqual(before.first?.employees.count, 4)
-//        
-//        // remove all employees from original struct
-//        s1.employees.removeAll()
-//        
-//        // save the changes
-//        testTry {
-//            try s1.save(self.context)
-//        }
-//        
-//        // check for resulting
-//        let after: [StoredCompany] = try! StoredCompany.query(self.context, predicate: nil)
-//        XCTAssertEqual(after.first?.employees.count, 0)
-//    }
-    
 }
