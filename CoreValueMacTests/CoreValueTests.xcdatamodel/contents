@@ -1,8 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="10174" systemVersion="15B42" minimumToolsVersion="Automatic">
+    <entity name="Article" syncable="YES">
+        <attribute name="id" optional="YES" attributeType="Integer 16" defaultValueString="0" syncable="YES"/>
+        <attribute name="text" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="author" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Author" inverseName="articles" inverseEntity="Author" syncable="YES"/>
+        <relationship name="category" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Category" inverseName="articles" inverseEntity="Category" syncable="YES"/>
+    </entity>
+    <entity name="Author" syncable="YES">
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="articles" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Article" inverseName="author" inverseEntity="Article" syncable="YES"/>
+    </entity>
     <entity name="Car" syncable="YES">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="type" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <entity name="Category" syncable="YES">
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="label" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="type" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="articles" optional="YES" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="Article" inverseName="category" inverseEntity="Article" syncable="YES"/>
     </entity>
     <entity name="Company" syncable="YES">
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
@@ -45,5 +62,8 @@
         <element name="Other" positionX="-54" positionY="36" width="128" height="30"/>
         <element name="Shop" positionX="-54" positionY="27" width="128" height="105"/>
         <element name="Product" positionX="-45" positionY="63" width="128" height="90"/>
+        <element name="Article" positionX="-36" positionY="72" width="128" height="105"/>
+        <element name="Author" positionX="-27" positionY="81" width="128" height="90"/>
+        <element name="Category" positionX="-9" positionY="99" width="128" height="105"/>
     </elements>
 </model>
