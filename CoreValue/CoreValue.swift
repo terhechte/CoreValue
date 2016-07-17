@@ -652,6 +652,7 @@ public extension BoxingUniqueStruct {
      */
     func defaultSave(context: NSManagedObjectContext) throws {
         try self.toObject(context)
+        try context.save()
     }
     
     public func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
