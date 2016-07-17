@@ -27,12 +27,6 @@ struct Author : CVManagedUniqueStruct {
             <^> o <| "id"
             <^> o <| "name"
     }
-    
-    //    func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
-    //        return try self.managedObject(context)
-    //            |> ("id", self.id)
-    //            |> ("name", self.name)
-    //    }
 }
 
 struct Article: CVManagedUniqueStruct {
@@ -53,13 +47,6 @@ struct Article: CVManagedUniqueStruct {
             <^> o <| "text"
             <^> o <|? "author"
     }
-    
-    //    func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
-    //        return try self.managedObject(context)
-    //                |> ("id", self.id)
-    //                |> ("text", self.text)
-    //                ?|> ("author", self.author)
-    //    }
 }
 
 struct Category: CVManagedUniqueStruct {
@@ -97,14 +84,6 @@ struct Category: CVManagedUniqueStruct {
             <^> o <| "label"
             <^> o <|| "articles"
     }
-    
-    //    func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
-    //        return try self.managedObject(context)
-    //            |> ("id", self.id)
-    //            |> ("type", self.type)
-    //            |> ("label", self.label)
-    //            ||> ("articles", self.articles)
-    //    }
 }
 
 
