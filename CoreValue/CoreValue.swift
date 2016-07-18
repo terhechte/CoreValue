@@ -717,6 +717,7 @@ public extension Array where Element: BoxingUniqueStruct {
     
     func saveAll(context: NSManagedObjectContext) throws {
         try self.toObjects(context)
+        try context.save()
     }
 }
 
