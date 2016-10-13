@@ -607,6 +607,14 @@ public extension BoxingUniqueStruct {
         if let ctx = context {
             let predicate = try self.identifierPredicate()
             
+            // Fetch requests go all the way down to the database. First, we see
+            // if we can find the object in the set of registered objects already
+            for registeredObject in ctx.registeredObjects {
+                if predicate.evaluateWithObject(registeredObject) {
+                    return registeredObject
+                }
+            }
+            
             var managedObject: NSManagedObject
             
             let fetchRequest = NSFetchRequest(entityName: self.dynamicType.EntityName)
@@ -699,8 +707,7 @@ public extension Array where Element: BoxingUniqueStruct {
             var managedObject: NSManagedObject
             
             let singlePredicate = try object.identifierPredicate()
-            
-            let resultsWithIdentifier = fetchResults.filter { singlePredicate.evaluateWithObject($0) }
+            let resultsWithIdentifier = (fetchResults as NSArray).filteredArrayUsingPredicate(singlePredicate)
             
             if let fetchedObject = resultsWithIdentifier.first as? NSManagedObject {
                 managedObject = fetchedObject
