@@ -642,26 +642,22 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
                     result.setValue(nil, forKey: label)
                     // Optional with Value
                 case (.Optional?, let child?):
-                    result.setValue(child.value as? AnyObject, forKey: label)
-                    // A collection of objects
-                case (.Collection?, _):
-                    var objects: [NSManagedObject] = []
-                    for (_, value) in valueMirror.children {
-                        if let boxedValue = value as? BoxingStruct {
-                            objects.append(try boxedValue.toObject(context))
-                        }
-                    }
-
-                    let orderedSet = NSOrderedSet(array: objects)
+                    let optionalMirror: Mirror = Mirror(reflecting: child.value)
                     
-                    let mutableValue = result.mutableOrderedSetValueForKey(label)
-                    if objects.count == 0 {
-                        mutableValue.removeAllObjects()
-                    } else {
-                        mutableValue.intersectOrderedSet(orderedSet) // removes objects that are not in new array
-                        mutableValue.unionOrderedSet(orderedSet) // adds new objects
+                    switch (optionalMirror.displayStyle, optionalMirror.children.first) {
+                    case (.Collection?, _):
+                        try internalCollectionToSet(context, result: result, label: label, mirror: optionalMirror)
+                    default:
+                        if let value = child.value as? Boxing {
+                            try value.box(result, withKey: label)
+                        }else {
+                            result.setValue(child.value as? AnyObject, forKey: label)
+                        }
+                        break
                     }
-
+                // A collection of objects
+                case (.Collection?, _):
+                    try internalCollectionToSet(context, result: result, label: label, mirror: valueMirror)
                 default:
                     // If we end up here, we were unable to decode it
                     throw CVManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
@@ -672,5 +668,24 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
         return result
     }
     throw CVManagedStructError.StructConversionError(message: "Object is not a struct: \(entity)")
+}
+
+private func internalCollectionToSet(context: NSManagedObjectContext?, result: NSManagedObject, label: String, mirror: Mirror) throws {
+    var objects: [NSManagedObject] = []
+    for (_, value) in mirror.children {
+        if let boxedValue = value as? BoxingStruct {
+            objects.append(try boxedValue.toObject(context))
+        }
+    }
+    
+    let orderedSet = NSOrderedSet(array: objects)
+    
+    let mutableValue = result.mutableOrderedSetValueForKey(label)
+    if objects.count == 0 {
+        mutableValue.removeAllObjects()
+    } else {
+        mutableValue.intersectOrderedSet(orderedSet) // removes objects that are not in new array
+        mutableValue.unionOrderedSet(orderedSet) // adds new objects
+    }
 }
 

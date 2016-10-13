@@ -157,8 +157,8 @@
 		4D59125A1B4989FB0022506E /* CoreValue */ = {
 			isa = PBXGroup;
 			children = (
-				4D5912721B498A170022506E /* CoreValue.swift */,
 				4D6AEB981B4DEAE100DDD5E1 /* curry.swift */,
+				4D5912721B498A170022506E /* CoreValue.swift */,
 				4D391F291B5404FE00C66C90 /* Frameworks */,
 			);
 			path = CoreValue;

@@ -58,11 +58,26 @@ struct Shop: CVManagedStruct {
     
     var name: String
     var owner: Employee
+    var products: Array<Product>?
     
     static func fromObject(o: NSManagedObject) throws -> Shop {
         return try curry(self.init)
             <^> o <| "name"
             <^> o <| "owner"
+            <^> o <|| "products"
+    }
+}
+
+struct Product: CVManagedStruct {
+    static let EntityName = "Product"
+    
+    var name: String
+    var color: String
+    
+    static func fromObject(o: NSManagedObject) throws -> Product {
+        return try curry(self.init)
+            <^> o <| "name"
+            <^> o <| "color"
     }
 }
 
@@ -200,7 +215,7 @@ class CoreValueMacTests: XCTestCase {
     var nsEmployee2: NSManagedObject!
     
     let shop = {
-        return Shop(name: "Carl's Household Items", owner: Employee(name: "Carl", age: 66, position: nil, department: "Register", job: "Owner"))
+        return Shop(name: "Carl's Household Items", owner: Employee(name: "Carl", age: 66, position: nil, department: "Register", job: "Owner"), products: nil)
     }()
     
     var nsShop: NSManagedObject!
@@ -458,6 +473,29 @@ class CoreValueMacTests: XCTestCase {
             
         } catch let e {
             XCTAssert(false, "\(e)")
+        }
+    }
+    
+    func testOptionalCollectionToCoreData() {
+        // create two shops
+        let s1 = Shop(name: "shop_with_products1", owner: Employee(name: "a", age: 4, position: nil, department: "", job: ""), products: [Product(name: "Pancake", color:"golden")])
+        do {
+            try s1.toObject(self.context)
+        } catch let e {
+            XCTAssert(false, "\(e)")
+        }
+        
+        let s2 = Shop(name: "shop_with_products2", owner: Employee(name: "a", age: 4, position: nil, department: "", job: ""), products: [Product(name: "Unicorn", color: "sparkling")])
+        testTry {
+            try s2.toObject(self.context)
+        }
+        
+        // And query the count
+        testTry {
+            let predicate = NSPredicate(format: "self.name=='shop_with_products1'", argumentArray: [])
+            let results: [Shop] = try Shop.query(self.context, predicate: predicate)
+            XCTAssert(results.count == 1, "Wrong amount of objects, update did insert: \(results.count)")
+            XCTAssert(results.first?.products?.count == 1, "Wrong amount of products, actual amount: \(results.first?.products?.count ?? 0)")
         }
     }
 }
