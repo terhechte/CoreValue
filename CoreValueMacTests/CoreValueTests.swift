@@ -167,6 +167,56 @@ struct Car: CVManagedPersistentStruct {
     }
 }
 
+
+struct UniqueShopEmployee : CVManagedUniqueStruct {
+    
+    static let EntityName = "Employee"
+    
+    static var IdentifierName: String = "name"
+    
+    func IdentifierValue() -> IdentifierType {
+        return self.name
+    }
+    
+    let name: String
+    let age: Int16
+    let position: String?
+    let department: String
+    let job: String
+    let shop: StoredShop?
+    
+    static func fromObject(o: NSManagedObject) throws -> UniqueShopEmployee {
+        return try curry(self.init)
+            <^> o <| "name"
+            <^> o <| "age"
+            <^> o <|? "position"
+            <^> o <| "department"
+            <^> o <| "job"
+            <^> o <|? "shop"
+    }
+}
+
+struct UniqueEmployeeShop: CVManagedUniqueStruct {
+    static let EntityName = "Shop"
+    
+    static var IdentifierName: String = "name"
+    
+    func IdentifierValue() -> IdentifierType {
+        return self.name
+    }
+    
+    var name: String
+    var employees: [UniqueShopEmployee]
+    
+    static func fromObject(o: NSManagedObject) throws -> UniqueEmployeeShop {
+        return try curry(self.init)
+            <^> o <| "name"
+            <^> o <|| "employees"
+    }
+}
+
+
+
 /// Attempt f, fail test if it throws
 func testTry(@noescape f: () throws -> ()) {
     do {
@@ -647,7 +697,31 @@ class CoreValuePerformanceTests: XCTestCase {
         return companyBox
     }()
     
-    func testUnboxPerformance() {
+    var manyStoredShops: [StoredEmployeeShop] = {
+        var box: [StoredShopEmployee] = []
+        for c in 0..<25 {
+            box.append(StoredShopEmployee(objectID: nil, name: "employee", age: Int16(c), position: nil, department: "", job: "", shop: nil))
+        }
+        var companyBox: [StoredEmployeeShop] = []
+        for c in 0..<50 {
+            companyBox.append(StoredEmployeeShop(objectID: nil, name: "a Company \(c)", employees: box))
+        }
+        return companyBox
+    }()
+    
+    var manyUniqueShops: [UniqueEmployeeShop] = {
+        var box: [UniqueShopEmployee] = []
+        for c in 0..<25 {
+            box.append(UniqueShopEmployee(name: "employee", age: Int16(c), position: nil, department: "", job: "", shop: nil))
+        }
+        var companyBox: [UniqueEmployeeShop] = []
+        for c in 0..<50 {
+            companyBox.append(UniqueEmployeeShop(name: "a Company \(c)", employees: box))
+        }
+        return companyBox
+    }()
+    
+    func testBoxPerformance() {
         self.measureBlock {
             testTry {
                 let results: [NSManagedObject] = try self.manyCompanies.map { company in
@@ -655,31 +729,66 @@ class CoreValuePerformanceTests: XCTestCase {
                     XCTAssert(managedCompany.valueForKey("name") as? String == company.name)
                     return managedCompany
                 }
-                XCTAssert(results.count == self.manyCompanies.count, "Unboxed Companies have to be the same amount of entities")
+                XCTAssert(results.count == self.manyCompanies.count, "Boxed Companies have to be the same amount of entities")
             }
         }
     }
     
-    func testBoxPerformance() {
+    func testBoxPersistentPerformance() {
+        self.measureBlock {
+            testTry {
+                let results: [NSManagedObject] = try self.manyStoredShops.map { shop in
+                    var mutatedShop = shop
+                    let managedShop = try mutatedShop.mutatingToObject(self.context)
+                    XCTAssert(managedShop.valueForKey("name") as? String == shop.name)
+                    return managedShop
+                }
+                XCTAssert(results.count == self.manyStoredShops.count, "Boxed Companies have to be the same amount of entities")
+            }
+        }
+    }
+    
+    func testBoxUniquePerformance() {
+        self.measureBlock {
+            testTry {
+                let results: [NSManagedObject] = try self.manyUniqueShops.map { shop in
+                    let managedShop = try shop.toObject(self.context)
+                    XCTAssert(managedShop.valueForKey("name") as? String == shop.name)
+                    return managedShop
+                }
+                XCTAssert(results.count == self.manyUniqueShops.count, "Boxed Companies have to be the same amount of entities")
+            }
+        }
+    }
+    
+    func testBoxUniqueInBatchPerformance() {
+        self.measureBlock {
+            testTry {
+                let results: [NSManagedObject] = try self.manyUniqueShops.toObjects(self.context)
+                XCTAssert(results.count == self.manyUniqueShops.count, "Boxed Companies have to be the same amount of entities")
+            }
+        }
+    }
+    
+    func testUnboxPerformance() {
         testTry {
             let results: [NSManagedObject] = try manyCompanies.map { company in
                 let managedCompany = try company.toObject(self.context)
                 XCTAssert(managedCompany.valueForKey("name") as? String == company.name)
                 return managedCompany
             }
-
+            
             self.measureBlock {
                 testTry {
                     let entities = try results.map {
                         try Company.fromObject($0)
                     }
-
-                    XCTAssert(entities.count == results.count, "Boxed Companies have to have the same amount of entities.")
+                    
+                    XCTAssert(entities.count == results.count, "Unboxed Companies have to have the same amount of entities.")
                 }
             }
         }
     }
 }
-
 
 

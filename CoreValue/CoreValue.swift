@@ -142,16 +142,16 @@ extension BoxingStruct {
 }
 
 /**
-   Add support for persistence, i.e. entities that know they were fetched from a context
-   and can appropriately update themselves in the context, or be deleted, etc.
-   Still a basic implementation.
-
-   Caveats:
-   - If type T: BoxingPersistentStruct has a property Tx: BoxingStruct, then saving/boxing
-     T will create new instances of Tx. So, as a requirement that is with the current swift compiler
-     impossible to define in types, any property on BoxingPersistentStruct also has to be of
-     type BoxingPersistentStruct
-*/
+ Add support for persistence, i.e. entities that know they were fetched from a context
+ and can appropriately update themselves in the context, or be deleted, etc.
+ Still a basic implementation.
+ 
+ Caveats:
+ - If type T: BoxingPersistentStruct has a property Tx: BoxingStruct, then saving/boxing
+ T will create new instances of Tx. So, as a requirement that is with the current swift compiler
+ impossible to define in types, any property on BoxingPersistentStruct also has to be of
+ type BoxingPersistentStruct
+ */
 
 public protocol BoxingPersistentStruct : BoxingStruct {
     /** If this value type is based on an existing object, this is the object id, so we can
@@ -181,6 +181,65 @@ public protocol BoxingPersistentStruct : BoxingStruct {
         Throws CVManagedStructErorr if saving fails */
     mutating func save(context: NSManagedObjectContext) throws
 }
+
+/**
+ Unique identifier in CoreData. Conform your identifier type to the protocol to use it in Boxing Unique struct
+ */
+public protocol IdentifierType {
+    func predicate(identifierName: String) -> NSPredicate
+}
+
+extension String: IdentifierType {
+    public func predicate(name: String) -> NSPredicate {
+        return NSPredicate(format: "\(name) = %@", self)
+    }
+}
+
+extension Int: IdentifierType {
+    public func predicate(name: String) -> NSPredicate {
+        return NSPredicate(format: "\(name) = %i", self)
+    }
+}
+
+extension Int16: IdentifierType {
+    public func predicate(name: String) -> NSPredicate {
+        return NSPredicate(format: "\(name) = %i", self)
+    }
+}
+
+extension Int32: IdentifierType {
+    public func predicate(name: String) -> NSPredicate {
+        return NSPredicate(format: "\(name) = %i", self)
+    }
+}
+
+/**
+ Adds support for persistence using the struct unique identifier, i.e. any entity with the same identifier will be fetched, updated or deleted accordingly.
+ */
+
+public protocol BoxingUniqueStruct : BoxingStruct {
+    /** Name of the Identifier in the CoreData (e.g: 'id')
+     */
+    static var IdentifierName: String {get}
+    
+    /** Value of the Identifier for the current struct (e.g: 'self.id')
+     */
+    func IdentifierValue() -> IdentifierType
+    
+    /** Delete an object from the managedObjectStore.
+     
+     Throws an instance of CVManagedStructError in case the object cannot be found
+     in the managedObjectStore or if deletion fails due to an underlying core data
+     error.
+     */
+    func delete(context: NSManagedObjectContext?) throws
+    
+    /** Save an object to the managedObjectStore or update the current instance in the
+     managedObjectStore with the current Value Type properties.
+     Throws CVManagedStructErorr if saving fails */
+    func save(context: NSManagedObjectContext) throws
+}
+
 
 public protocol UnboxingStruct : Unboxing {
     /** 
@@ -231,6 +290,13 @@ public protocol CVManagedStruct : _CVManagedStruct {
 public typealias _CVManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
 
 public protocol CVManagedPersistentStruct : _CVManagedPersistentStruct {
+    associatedtype StructureType = Self
+}
+
+
+public typealias _CVManagedUniqueStruct = protocol<BoxingUniqueStruct, UnboxingStruct>
+
+public protocol CVManagedUniqueStruct : _CVManagedUniqueStruct {
     associatedtype StructureType = Self
 }
 
@@ -531,6 +597,134 @@ private extension BoxingPersistentStruct {
         } else {
             return virginObjectForEntity(self.dynamicType.EntityName, context: context)
         }
+    }
+}
+
+public extension BoxingUniqueStruct {
+    
+    
+    func managedObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+        if let ctx = context {
+            let predicate = try self.identifierPredicate()
+            
+            // Fetch requests go all the way down to the database. First, we see
+            // if we can find the object in the set of registered objects already
+            for registeredObject in ctx.registeredObjects {
+                if predicate.evaluateWithObject(registeredObject) {
+                    return registeredObject
+                }
+            }
+            
+            var managedObject: NSManagedObject
+            
+            let fetchRequest = NSFetchRequest(entityName: self.dynamicType.EntityName)
+            fetchRequest.predicate = predicate
+            
+            let fetchResults = try ctx.executeFetchRequest(fetchRequest)
+            if let fetchedObject = fetchResults.first as? NSManagedObject {
+                managedObject = fetchedObject
+            } else {
+                managedObject = virginObjectForEntity(self.dynamicType.EntityName, context: context)
+            }
+            
+            return managedObject
+            
+        } else {
+            return virginObjectForEntity(self.dynamicType.EntityName, context: context)
+        }
+    }
+    
+    func identifierPredicate() throws -> NSPredicate {
+        let identifierName = self.dynamicType.IdentifierName
+        let identifierValue = self.IdentifierValue()
+        return identifierValue.predicate(identifierName)
+    }
+    
+    //TODO: Should check if object exists - This will create and delete object
+    func delete(context: NSManagedObjectContext?) throws {
+        guard let ctx = context else { return }
+        
+        do {
+            let object = try managedObject(context)
+            ctx.deleteObject(object)
+            //Commit changes to remove object from the uniquing tables
+            try ctx.save()
+            
+        } catch let error {
+            CVManagedStructError.StructDeleteError(message: "Could not locate object in context \(context): \(error)")
+        }
+    }
+    
+    /**
+     Default implementation of save function since Swift Structs can't have inheritance.
+     */
+    func defaultSave(context: NSManagedObjectContext) throws {
+        try self.toObject(context)
+        try context.save()
+    }
+    
+    public func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+        let result = try self.managedObject(context)
+        return try internalToObject(context, result: result, entity: self)
+    }
+    
+    /**
+     Point to override when saving nested collection, call .defaultSave method to perform original saving.
+     
+     Example:
+     mutating func save(context: NSManagedObjectContext) throws {
+     try self.someArray.saveAll(context)
+     try self.defaultSave(context)
+     }
+     */
+    func save(context: NSManagedObjectContext) throws {
+        try self.defaultSave(context)
+    }
+}
+
+public extension Array where Element: BoxingUniqueStruct {
+    /**
+     Converts array to objects using one fetch request
+     */
+    func toObjects(context: NSManagedObjectContext) throws -> [NSManagedObject] {
+        var predicates: [NSPredicate] = []
+        var objects: [NSManagedObject] = []
+        
+        for (idx, _) in enumerate() {
+            predicates.append(try self[idx].identifierPredicate())
+        }
+        
+        let predicate = NSCompoundPredicate(orPredicateWithSubpredicates: predicates)
+        
+        let fetchRequest = NSFetchRequest(entityName: Element.EntityName)
+        fetchRequest.predicate = predicate
+        
+        let fetchResults = try context.executeFetchRequest(fetchRequest)
+        
+        for (idx, _) in enumerate() {
+            let object = self[idx]
+            
+            var managedObject: NSManagedObject
+            
+            let singlePredicate = try object.identifierPredicate()
+            let resultsWithIdentifier = (fetchResults as NSArray).filteredArrayUsingPredicate(singlePredicate)
+            
+            if let fetchedObject = resultsWithIdentifier.first as? NSManagedObject {
+                managedObject = fetchedObject
+            }else {
+                managedObject = virginObjectForEntity(Element.EntityName, context: context)
+            }
+            
+            managedObject = try internalToObject(context, result: managedObject, entity: object)
+            objects.append(managedObject)
+        }
+        
+        return objects
+    }
+    
+    func saveAll(context: NSManagedObjectContext) throws {
+        try self.toObjects(context)
+        try context.save()
     }
 }
 
