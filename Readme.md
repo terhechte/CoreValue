@@ -424,7 +424,7 @@ Initial Release
 
 ## Acknoledgements
 
-CoreValue uses ideas and code from [ThoughtBot's Argo framework for JSON encoding/decoding](https://github.com/thoughtbot/Argo). Most notably their `curry` implementation. Have a look at it, it is an awesome framework.
+CoreValue uses ideas and code from [thoughtbot's Argo framework for JSON decoding](https://github.com/thoughtbot/Argo). Most notably their `curry` implementation. Have a look at it, it is an awesome framework.
 
 ## License
 
