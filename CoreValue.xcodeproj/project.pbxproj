@@ -26,6 +26,7 @@
 		4D6AEB9A1B4DEAE100DDD5E1 /* curry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6AEB981B4DEAE100DDD5E1 /* curry.swift */; };
 		4D6AEB9B1B4DEAE100DDD5E1 /* curry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6AEB981B4DEAE100DDD5E1 /* curry.swift */; };
 		4D6AEB9C1B4DEAE100DDD5E1 /* curry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6AEB981B4DEAE100DDD5E1 /* curry.swift */; };
+		4DD4AFB71DB4BF7900E57BA6 /* UniqueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9017791D3AE28100F33670 /* UniqueTests.swift */; };
 		AC90177A1D3AE28100F33670 /* UniqueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9017791D3AE28100F33670 /* UniqueTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -400,6 +401,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4DD4AFB71DB4BF7900E57BA6 /* UniqueTests.swift in Sources */,
 				4D5912991B498B000022506E /* CoreValue.swift in Sources */,
 				2F13B6E01C79EF3E0099947C /* CollectionTests.swift in Sources */,
 				4D2680261B4C5091001F8D35 /* CoreValueTests.xcdatamodel in Sources */,

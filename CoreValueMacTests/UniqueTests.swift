@@ -22,7 +22,7 @@ struct Author : CVManagedUniqueStruct {
     let id: String
     let name: String
     
-    static func fromObject(o: NSManagedObject) throws -> Author {
+    static func fromObject(_ o: NSManagedObject) throws -> Author {
         return try curry(self.init)
             <^> o <| "id"
             <^> o <| "name"
@@ -41,7 +41,7 @@ struct Article: CVManagedUniqueStruct {
     var author: Author?
     
     
-    static func fromObject(o: NSManagedObject) throws -> Article {
+    static func fromObject(_ o: NSManagedObject) throws -> Article {
         return try curry(self.init)
             <^> o <| "id"
             <^> o <| "text"
@@ -57,7 +57,7 @@ struct Category: CVManagedUniqueStruct {
     func IdentifierValue() -> IdentifierType { return self.id }
     
     //Create hash value for combined identifier
-    static func identifier(type type: String, label: String) -> String{
+    static func identifier(type: String, label: String) -> String{
         return "\(type)-\(label)"
     }
     
@@ -77,7 +77,7 @@ struct Category: CVManagedUniqueStruct {
     var articles: Array<Article>
     
     
-    static func fromObject(o: NSManagedObject) throws -> Category {
+    static func fromObject(_ o: NSManagedObject) throws -> Category {
         return try curry(self.init)
             <^> o <| "id"
             <^> o <| "type"
@@ -90,7 +90,7 @@ struct Category: CVManagedUniqueStruct {
 class UniqueTests: XCTestCase {
     
     var context: NSManagedObjectContext = {
-        return setUpInMemoryManagedObjectContext(CoreValueMacTests)!
+        return setUpInMemoryManagedObjectContext(CoreValueMacTests.self)!
     }()
     
     
@@ -242,11 +242,11 @@ class UniqueTests: XCTestCase {
     
     func testToObjectPerformance() {
         testTry {
-            self.measureBlock {
+            self.measure {
                 testTry {
                     let results: [NSManagedObject] = try self.manyCategories.map { category in
                         let managedCompany = try category.toObject(self.context)
-                        XCTAssert(managedCompany.valueForKey("id") as? String == category.id)
+                        XCTAssert(managedCompany.value(forKey: "id") as? String == category.id)
                         return managedCompany
                     }
                     XCTAssert(results.count == self.manyCategories.count, "Unboxed Companies have to be the same amount of entities")
@@ -257,7 +257,7 @@ class UniqueTests: XCTestCase {
     
     func testToObjectsPerformance() {
         testTry {
-            self.measureBlock {
+            self.measure {
                 testTry {
                     let results: [NSManagedObject] = try self.manyCategories.toObjects(self.context)
                     XCTAssert(results.count == self.manyCategories.count, "Unboxed Companies have to be the same amount of entities")
