@@ -198,7 +198,7 @@ struct Counter : UnboxingStruct
 	var count: Int
 	let name: String
 	static func fromObject(_ object: NSManagedObject) throws -> Counter {
-		return try curry(self.init) <^> object <| "count" <*> object <| "name"
+		return try curry(self.init) <^> object <| "count" <^> object <| "name"
 	}
 }
 ```
