@@ -1,5 +1,6 @@
 <p align="center">
 <img src="Documents/header.png" srcset="Documents/header.png 1x Documents/header@2x.png 2x" /><br/>
+<a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-3-orange.svg" /></a>
 <a href="https://github.com/Carthage/Carthage"><img src="https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat" /></a>
 <a href="https://cocoapods.org"><img src="https://img.shields.io/cocoapods/v/CoreValue.svg" /></a>
 <img src="https://img.shields.io/cocoapods/p/CoreValue.svg" />
@@ -13,7 +14,7 @@
 - iOS and Mac OS X support
 - Use with `structs`
 - Works fine with `let` and `var` based properties
-- Swift 2.2
+- Swift 3.0 (for Swift 2.2 use [Version 0.2](https://github.com/terhechte/CoreValue/releases/tag/v0.2.0))
 
 ##Rationale
 
@@ -21,34 +22,36 @@ Swift introduced versatile value types into the iOS and Cocoa development domain
 
 CoreValue is a lightweight wrapper framework around Core Data. It takes care of `boxing` value types into Core Data objects and `unboxing` Core Data objects into value types. It also contains simple abstractions for easy querying, updating, saving, and deleting.
 
+If you're porting your app to Swift 3, please see the Swift 3 section at the bottom.
+
 ##Usage
 
 The following struct supports boxing, unboxing, and keeping object state:
 
 ``` Swift
-	struct Shop: CVManagedPersistentStruct {
-	
-	    // The name of the CoreData entity
-	    static let EntityName = "Shop"
-	    
-	    // The ObjectID of the CoreData object we saved to or loaded from
-	    var objectID: NSManagedObjectID?
-	    
-	    // Our properties
-	    let name: String
-	    var age: Int32
-	    var owner: Owner?
-	    
-	    // Create a Value Type from a NSManagedObject
-	    // If this looks too complex, see below for an explanation and alternatives
-	    static func fromObject(o: NSManagedObject) throws -> Shop {
-	        return curry(self.init)
-	            <^> o <|? "objectID"
-	            <*> o <| "name"
-	            <*> o <| "age"
-	            <*> o <|? "owner"
-	    }
-	}
+struct Shop: CVManagedPersistentStruct {
+    
+    // The name of the CoreData entity
+    static let EntityName = "Shop"
+    
+    // The ObjectID of the CoreData object we saved to or loaded from
+    var objectID: NSManagedObjectID?
+    
+    // Our properties
+    let name: String
+    var age: Int32
+    var owner: Owner?
+    
+    // Create a Value Type from a NSManagedObject
+    // If this looks too complex, see below for an explanation and alternatives
+    static func fromObject(_ o: NSManagedObject) throws -> XShop {
+        return try curry(self.init)
+            <^> o <|? "objectID"
+            <^> o <| "name"
+            <^> o <| "age"
+            <^> o <|? "owner"
+    }
+}
 ```
 
 
@@ -60,7 +63,7 @@ That's it. Everything else it automated from here. Here're some examples of what
 	let shops: [Shop] = Shop.query(self.context, predicate: nil)
 	
 	// Create a shop
-	let aShop = Shop(name: "Household Wares", age: 30, owner: nil)
+	let aShop = Shop(objectID: nil, name: "Household Wares", age: 30, owner: nil)
 	
 	// Store it as a managed object
 	aShop.save(self.context)
@@ -181,7 +184,7 @@ In CoreValue, `boxed` refers to values in an NSManagedObject container. I.e. NSN
 struct Counter : UnboxingStruct
 	var count: Int
 	let name: String
-	static func fromObject(object: NSManagedObject) throws -> Counter {
+	static func fromObject(_ object: NSManagedObject) throws -> Counter {
 	return Counter(count: object.valueForKey("count")!.integerValue,
            name: object.valueForKey("name") as! String)
 	}
@@ -194,8 +197,8 @@ Even though this example is not safe, we can observe several things from it. Fir
 struct Counter : UnboxingStruct
 	var count: Int
 	let name: String
-	static func fromObject(object: NSManagedObject) throws -> Counter {
-		return curry(self.init) <^> object <| "count" <*> object <| "name"
+	static func fromObject(_ object: NSManagedObject) throws -> Counter {
+		return try curry(self.init) <^> object <| "count" <*> object <| "name"
 	}
 }
 ```
@@ -216,9 +219,6 @@ Map the following operations over the `A -> B -> fn` that we just created
 `object <| "count"`
 First operation: Take `object`, call `valueForKey` with the key `"count"` and assign this as the value for the first type of the curryed init function `A`
 
-`<*>`
-Apply on the curried self.init
-
 `object <| "name"`
 Second operation: Take `object`, call `valueForKey` with the key `"count"` and assign this as the value for the second type of the curryed init function `B`
 
@@ -230,8 +230,7 @@ Custom Operators are observed as a critical Swift feature, and rightly so. Too m
 
            Operator                     | Description
 :-----:|----------------------------------------------------------
- <^>   |  Map the following operations (always has to be the first op)
- <*>   |  Apply on the fn (use this to combine operations)
+ <^>   |  Map the following operations (i.e. combine map operations)
  <\|   |  Unbox a normal value (i.e. var shop: Shop)
  <\|\| |  Unbox a set/list of values (i.e. var shops: [Shops])
  <\|?  |  Unbox an optional value (i.e. var shop: Shop?)
@@ -259,7 +258,7 @@ extension CarType: Boxing,Unboxing {}
      var name: String
      var type: CarType
      
-     static func fromObject(o: NSManagedObject) throws -> Car {
+     static func fromObject(_ o: NSManagedObject) throws -> Car {
          return try curry(self.init)
              <^> o <|? "objectID"
              <^> o <| "name"
@@ -288,14 +287,14 @@ struct Employee : CVManagedPersistentStruct {
     let department: String
     let job: String
     
-    static func fromObject(o: NSManagedObject) throws -> Employee {
-        return curry(self.init)
+    static func fromObject(_ o: NSManagedObject) throws -> Employee {
+        return try curry(self.init)
             <^> o <| "objectID"
-            <*> o <| "name"
-            <*> o <| "age"
-            <*> o <|? "position"
-            <*> o <| "department"
-            <*> o <| "job"
+            <^> o <| "name"
+            <^> o <| "age"
+            <^> o <|? "position"
+            <^> o <| "department"
+            <^> o <| "job"
     }
 }
 
@@ -308,12 +307,12 @@ struct Shop: CVManagedPersistentStruct {
     var age: Int16
     var employees: [Employee]
     
-    static func fromObject(o: NSManagedObject) throws -> Shop {
-        return curry(self.init)
+    static func fromObject(_ o: NSManagedObject) throws -> Shop {
+        return try curry(self.init)
             <^> o <| "objectID"
-            <*> o <| "age"
-            <*> o <| "name"
-            <*> o <|| "employees"
+            <^> o <| "age"
+            <^> o <| "name"
+            <^> o <|| "employees"
     }
 }
 
@@ -329,6 +328,45 @@ for shop in shops {
 
 ```
 
+## CVManagedUniqueStruct and REST / Serialization / JSON
+
+All the examples we've seen so far resolve around a use case where data is contained within your app. This means that the unique identifier of a NSManagedObject or Struct is dicated by the NSManagedObjectID unique identifier which Core Data generates. This is fine as long as you don't plan to interact with outside data. If your data is loaded from external sources (i.e. JSON from a Rest API) then it may already have a unique identifier. `CVManagedUniqueStruct`  allows you to force CoreValue / Core Data to use this external unique identifier in NSManagedObjectID's stead. The implementation is easy. You just have to conform to the `BoxingUniqueStruct` protocol which requires the implementation of a var naming the unique id field and a function returning the current ID value:
+
+``` Swift
+/** Name of the Identifier in the CoreData (e.g: 'id')
+  */
+static var IdentifierName: String {get}
+
+/** Value of the Identifier for the current struct (e.g: 'self.id')
+  */
+func IdentifierValue() -> IdentifierType
+```
+
+Here's a complete & simple example:
+
+``` Swift
+struct Author : CVManagedUniqueStruct {
+    
+    static let EntityName = "Author"
+    
+    static var IdentifierName: String = "id"
+    
+    func IdentifierValue() -> IdentifierType { return self.id }
+    
+    let id: String
+    let name: String
+    
+    static func fromObject(_ o: NSManagedObject) throws -> Author {
+        return try curry(self.init)
+            <^> o <| "id"
+            <^> o <| "name"
+    }
+}
+
+```
+
+Please not that `CVManagedUniqueStruct` adds an (roughly) O(n) overhead on top of `NSManagedObjectID` based solutions due to the way object lookup is currently implemented.
+
 ## State
 
 All Core Data Datatypes are supported, with the following **exceptions**:
@@ -337,6 +375,14 @@ All Core Data Datatypes are supported, with the following **exceptions**:
 
 Fetched properties are not supported yet.
 
+
+## Swift 3.0 Conversion
+
+The Swift 3.0 conversion changed a few things within the framework. In order to make it easier, here's a list of things to do:
+
+1. Replace `<*>` operators with `<^>`
+2. Replace `func fromObject(object)` with `func fromObject(_ object)`
+3. Replace `return curry(self.init)...` with `return try curry(self.init)...`
 
 ## Installation (iOS and OSX)
 
@@ -356,7 +402,7 @@ You will also need to make sure you're opting into using frameworks:
 use_frameworks!
 ```
 
-Then run `pod install` with CocoaPods 0.36 or newer.
+Then run `pod install` with CocoaPods 1.01 or newer.
 
 ### [Carthage]
 
@@ -365,7 +411,7 @@ Then run `pod install` with CocoaPods 0.36 or newer.
 Add the following to your Cartfile:
 
 ```
-github "terhechte/CoreValue" ~> 0.2.0
+github "terhechte/CoreValue" ~> 0.3.0
 ```
 
 Then run `carthage update`.
@@ -395,6 +441,10 @@ Benedikt Terhechte
 [Appventure.me](http://appventure.me)
 
 ## Changelog
+
+### Version 0.3.0
+- Swift 3 Support
+- Added CVManagedUniqueStruct thanks to [tkohout](https://github.com/tkohout)
 
 ### Version 0.2.0
 - Switched Error Handling from `Unboxed` to Swift's native `throw`. Big thanks to [Adlai Holler](https://github.com/Adlai-Holler) for spearheading this!
@@ -433,7 +483,6 @@ The CoreValue source code is available under the MIT License.
 ## Open Tasks
 
 - [ ] test unboxing with custom initializers (init(...))
-- [ ] add thoughtbot curry framework https://github.com/thoughtbot/Curry
 - [ ] change the protocol composition so that the required implementations (entityname, objectID, fromObject) form an otherwise empty protocol so it is easier to see the protocol and implement the requirements
 - [ ] add travis build
 - [ ] support aggregation
