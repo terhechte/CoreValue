@@ -32,32 +32,34 @@ Unboxing NSManagedObjects into Value types.
   to be unboxed
 */
 
+
+
 // monadic operators
-infix operator <^> { associativity left precedence 130 }
+infix operator <^> : AdditionPrecedence
 
 // pull value/s from nsmanagedobject
-infix operator <| { associativity left precedence 150 }
-infix operator <|| { associativity left precedence 150 }
-infix operator <|? { associativity left precedence 150 }
+infix operator <| : MultiplicationPrecedence
+infix operator <|| : MultiplicationPrecedence
+infix operator <|? : MultiplicationPrecedence
 
 public func <^> <A, B>(f: ((A) throws -> B), a: A) rethrows -> B {
     return try f(a)
 }
 
-public func <| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) throws -> A {
-    if let s = value.valueForKey(key) {
-        return try A.unbox(s)
+public func <| <A>(value: NSManagedObject, key: String) throws -> A where A: Unboxing, A == A.StructureType {
+    if let s = value.value(forKey: key) {
+        return try A.unbox(s as AnyObject)
     }
     throw NSError(unboxErrorMessage: "\(key) \(A.self)")
 }
 
-public func <|? <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) -> A? {
+public func <|? <A>(value: NSManagedObject, key: String) -> A? where A: Unboxing, A == A.StructureType {
     return try? value <| key
 }
 
-public func <|| <A where A: Unboxing, A == A.StructureType>(value: NSManagedObject, key: String) throws -> [A] {
-    if let s = value.valueForKey(key) {
-        return try Array<A>.unbox(s)
+public func <|| <A>(value: NSManagedObject, key: String) throws -> [A] where A: Unboxing, A == A.StructureType {
+    if let s = value.value(forKey: key) {
+        return try Array<A>.unbox(s as AnyObject)
     } else {
         throw NSError(unboxErrorMessage: "\(key) \(A.self)")
     }
@@ -71,13 +73,13 @@ Value type that is to be constructed.
 - parameter T: is the value type that we're trying to construct.
 */
 public enum Unboxed<T> {
-    case Success(T)
-    case TypeMismatch(String)
+    case success(T)
+    case typeMismatch(String)
     
     public var value: T? {
         switch self {
-        case let .Success(value): return value
-        default: return .None
+        case let .success(value): return value
+        default: return .none
         }
     }
 }
@@ -93,7 +95,7 @@ public protocol Unboxing {
     Unbox a data from an NSManagedObject instance (or the instance itself) into a value type
     - parameter value: The data to be unboxed into a value type
     */
-    static func unbox(value: AnyObject) throws -> StructureType
+    static func unbox(_ value: AnyObject) throws -> StructureType
 }
 
 // MARK: -
@@ -114,7 +116,7 @@ public protocol Boxing {
     - parameter object: The NSManagedObject that the value type self should be boxed into
     - parameter withKey: The name of the property in the NSManagedObject that it should be written to
     */
-    func box(object: NSManagedObject, withKey: String) throws
+    func box(_ object: NSManagedObject, withKey: String) throws
 }
 
 public protocol BoxingStruct : Boxing {
@@ -132,11 +134,11 @@ public protocol BoxingStruct : Boxing {
     - parameter context: An Optional NSManagedObjectContext. If it is not provided, the objects
     are only temporary.
     */
-    func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject
+    @discardableResult func toObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject
 }
 
 extension BoxingStruct {
-    public func box(object: NSManagedObject, withKey: String) throws {
+    public func box(_ object: NSManagedObject, withKey: String) throws {
         try object.setValue(self.toObject(object.managedObjectContext), forKey: withKey)
     }
 }
@@ -162,7 +164,7 @@ public protocol BoxingPersistentStruct : BoxingStruct {
         call needs to be mutating. Calling simply toObject will also work, but will fail
         to update the objectID, thus causing multiple insertions (into the context) of the 
         same object during update */
-    mutating func mutatingToObject(context: NSManagedObjectContext?) throws -> NSManagedObject
+    @discardableResult mutating func mutatingToObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject
     
     /** Delete an object from the managedObjectStore. Has the side effect of setting the
         objectID of the BoxingPersistentStruct instance to nil. Will do nothing if there
@@ -174,41 +176,41 @@ public protocol BoxingPersistentStruct : BoxingStruct {
 
         - returns: Bool True if an object was successfully deleted, false if not
    */
-    mutating func delete(context: NSManagedObjectContext?) throws -> Bool
+    @discardableResult mutating func delete(_ context: NSManagedObjectContext?) throws -> Bool
     
     /** Save an object to the managedObjectStore or update the current instance in the
         managedObjectStore with the current Value Type properties.
         Throws CVManagedStructErorr if saving fails */
-    mutating func save(context: NSManagedObjectContext) throws
+    mutating func save(_ context: NSManagedObjectContext) throws
 }
 
 /**
  Unique identifier in CoreData. Conform your identifier type to the protocol to use it in Boxing Unique struct
  */
 public protocol IdentifierType {
-    func predicate(identifierName: String) -> NSPredicate
+    func predicate(_ identifierName: String) -> NSPredicate
 }
 
 extension String: IdentifierType {
-    public func predicate(name: String) -> NSPredicate {
+    public func predicate(_ name: String) -> NSPredicate {
         return NSPredicate(format: "\(name) = %@", self)
     }
 }
 
 extension Int: IdentifierType {
-    public func predicate(name: String) -> NSPredicate {
+    public func predicate(_ name: String) -> NSPredicate {
         return NSPredicate(format: "\(name) = %i", self)
     }
 }
 
 extension Int16: IdentifierType {
-    public func predicate(name: String) -> NSPredicate {
+    public func predicate(_ name: String) -> NSPredicate {
         return NSPredicate(format: "\(name) = %i", self)
     }
 }
 
 extension Int32: IdentifierType {
-    public func predicate(name: String) -> NSPredicate {
+    public func predicate(_ name: String) -> NSPredicate {
         return NSPredicate(format: "\(name) = %i", self)
     }
 }
@@ -232,12 +234,12 @@ public protocol BoxingUniqueStruct : BoxingStruct {
      in the managedObjectStore or if deletion fails due to an underlying core data
      error.
      */
-    func delete(context: NSManagedObjectContext?) throws
+    @discardableResult func delete(_ context: NSManagedObjectContext?) throws
     
     /** Save an object to the managedObjectStore or update the current instance in the
      managedObjectStore with the current Value Type properties.
      Throws CVManagedStructErorr if saving fails */
-    func save(context: NSManagedObjectContext) throws
+    func save(_ context: NSManagedObjectContext) throws
 }
 
 
@@ -251,11 +253,11 @@ public protocol UnboxingStruct : Unboxing {
     
     - parameter object: The NSManagedObject that should be converted to an instance of self
     */
-    static func fromObject(object: NSManagedObject) throws -> Self
+    static func fromObject(_ object: NSManagedObject) throws -> Self
 }
 
 extension UnboxingStruct {
-    public static func unbox<A: UnboxingStruct where A == A.StructureType>(value: AnyObject) throws -> A {
+    public static func unbox<A: UnboxingStruct>(_ value: AnyObject) throws -> A where A == A.StructureType {
         switch value {
             case let object as NSManagedObject:
                 return try A.fromObject(object)
@@ -281,20 +283,20 @@ protocol CVManagedStruct : BoxingStruct, UnboxingStruct {
 }
 
 */
-public typealias _CVManagedStruct = protocol<BoxingStruct, UnboxingStruct>
+public typealias _CVManagedStruct = BoxingStruct & UnboxingStruct
 
 public protocol CVManagedStruct : _CVManagedStruct {
     associatedtype StructureType = Self
 }
 
-public typealias _CVManagedPersistentStruct = protocol<BoxingPersistentStruct, UnboxingStruct>
+public typealias _CVManagedPersistentStruct = BoxingPersistentStruct & UnboxingStruct
 
 public protocol CVManagedPersistentStruct : _CVManagedPersistentStruct {
     associatedtype StructureType = Self
 }
 
 
-public typealias _CVManagedUniqueStruct = protocol<BoxingUniqueStruct, UnboxingStruct>
+public typealias _CVManagedUniqueStruct = BoxingUniqueStruct & UnboxingStruct
 
 public protocol CVManagedUniqueStruct : _CVManagedUniqueStruct {
     associatedtype StructureType = Self
@@ -313,11 +315,11 @@ For a first release, this should do though.
 */
 extension BoxingStruct {
     
-    public static func query<T: UnboxingStruct>(context: NSManagedObjectContext,
+    public static func query<T: UnboxingStruct>(_ context: NSManagedObjectContext,
         predicate: NSPredicate?,
         sortDescriptors: [NSSortDescriptor]? = nil) throws -> Array<T> {
             
-            let fetchRequest = NSFetchRequest(entityName: self.EntityName)
+            let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: self.EntityName)
             
             if let sortDescriptors = sortDescriptors {
                 fetchRequest.sortDescriptors = sortDescriptors
@@ -329,7 +331,7 @@ extension BoxingStruct {
             
             fetchRequest.predicate = predicate
             
-            let fetchResults = try context.executeFetchRequest(fetchRequest)
+            let fetchResults = try context.fetch(fetchRequest)
             return try fetchResults.map { obj in
                 try T.fromObject(obj as! NSManagedObject)
             }
@@ -347,19 +349,19 @@ extension BoxingStruct {
 NSManagedObject already contains implementations for unbox and box
 */
 extension NSManagedObject: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> NSManagedObject {
+    public static func unbox(_ value: AnyObject) -> NSManagedObject {
         return value as! NSManagedObject
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
+    public func box(_ object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
     }
 }
 
 extension NSManagedObjectID: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) -> NSManagedObjectID {
+    public static func unbox(_ value: AnyObject) -> NSManagedObjectID {
         return value as! NSManagedObjectID
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
+    public func box(_ object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
     }
 }
@@ -374,10 +376,10 @@ type constraints.
 - Currently, there's no support for NSSet
 */
 extension Array {
-    public static func unbox<T: Unboxing where T == T.StructureType>(value: AnyObject) throws -> [T] {
+    public static func unbox<T: Unboxing>(_ value: AnyObject) throws -> [T] where T == T.StructureType {
         switch value {
         case let orderedSet as NSOrderedSet:
-            return try orderedSet.map { try T.unbox($0) }
+            return try orderedSet.map { try T.unbox($0 as AnyObject) }
         default:
             throw NSError(unboxErrorMessage: "Array")
         }
@@ -385,7 +387,7 @@ extension Array {
 }
 
 extension Int: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> Int {
+    public static func unbox(_ value: AnyObject) throws -> Int {
         switch value {
         case let v as Int:
             return v
@@ -393,55 +395,55 @@ extension Int: Unboxing, Boxing {
             throw NSError(unboxErrorMessage: "Int")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
+    public func box(_ object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
     }
 }
 
 extension Int16: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> Int16 {
+    public static func unbox(_ value: AnyObject) throws -> Int16 {
         switch value {
         case let v as NSNumber:
-            return v.shortValue
+            return v.int16Value
         default:
             throw NSError(unboxErrorMessage: "Int16")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
-        object.setValue(NSNumber(short: self), forKey: withKey)
+    public func box(_ object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(value: self as Int16), forKey: withKey)
     }
 }
 
 extension Int32: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> Int32 {
+    public static func unbox(_ value: AnyObject) throws -> Int32 {
         switch value {
         case let v as NSNumber:
-            return v.intValue
+            return v.int32Value
         default:
             throw NSError(unboxErrorMessage: "Int32")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
-        object.setValue(NSNumber(int: self), forKey: withKey)
+    public func box(_ object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(value: self as Int32), forKey: withKey)
     }
 }
 
 extension Int64: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> Int64 {
+    public static func unbox(_ value: AnyObject) throws -> Int64 {
         switch value {
         case let v as NSNumber:
-            return v.longLongValue
+            return v.int64Value
         default:
             throw NSError(unboxErrorMessage: "Int64")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
-        object.setValue(NSNumber(longLong: self), forKey: withKey)
+    public func box(_ object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(value: self as Int64), forKey: withKey)
     }
 }
 
 extension Double: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> Double {
+    public static func unbox(_ value: AnyObject) throws -> Double {
         switch value {
         case let v as NSNumber:
             return v.doubleValue
@@ -449,77 +451,77 @@ extension Double: Unboxing, Boxing {
             throw NSError(unboxErrorMessage: "Double")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
-        object.setValue(NSNumber(double: self), forKey: withKey)
+    public func box(_ object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(value: self as Double), forKey: withKey)
     }
 }
 
 extension Float: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> Float {
+    public static func unbox(_ value: AnyObject) throws -> Float {
         switch value {
         case let v as NSNumber: return v.floatValue
         default: throw NSError(unboxErrorMessage: "Float")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
-        object.setValue(NSNumber(float: self), forKey: withKey)
+    public func box(_ object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(value: self as Float), forKey: withKey)
     }
 }
 
 extension Bool: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> Bool {
+    public static func unbox(_ value: AnyObject) throws -> Bool {
         switch value {
         case let v as NSNumber: return v.boolValue
         default: throw NSError(unboxErrorMessage: "Boolean")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
-        object.setValue(NSNumber(bool: self), forKey: withKey)
+    public func box(_ object: NSManagedObject, withKey: String) throws {
+        object.setValue(NSNumber(value: self as Bool), forKey: withKey)
     }
 }
 
 extension String: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> String {
+    public static func unbox(_ value: AnyObject) throws -> String {
         switch value {
         case let v as String: return v
         default: throw NSError(unboxErrorMessage: "String")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
+    public func box(_ object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
     }
 }
 
-extension NSData: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> NSData {
+extension Data: Unboxing, Boxing {
+    public static func unbox(_ value: AnyObject) throws -> Data {
         switch value {
-        case let data as NSData:
+        case let data as Data:
             return data
         default:
             throw NSError(unboxErrorMessage: "NSData")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
+    public func box(_ object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
     }
 }
 
-extension NSDate: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> NSDate {
+extension Date: Unboxing, Boxing {
+    public static func unbox(_ value: AnyObject) throws -> Date {
         switch value {
-        case let date as NSDate:
+        case let date as Date:
             return date
         default:
             throw NSError(unboxErrorMessage: "NSDate")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
+    public func box(_ object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
     }
 }
 
 extension NSDecimalNumber: Unboxing, Boxing {
-    public static func unbox(value: AnyObject) throws -> NSDecimalNumber {
+    public static func unbox(_ value: AnyObject) throws -> NSDecimalNumber {
         switch value {
         case let number as NSDecimalNumber:
             return number
@@ -527,25 +529,25 @@ extension NSDecimalNumber: Unboxing, Boxing {
             throw NSError(unboxErrorMessage: "NSDecimalNumber")
         }
     }
-    public func box(object: NSManagedObject, withKey: String) throws {
+    public func box(_ object: NSManagedObject, withKey: String) throws {
         object.setValue(self, forKey: withKey)
     }
 }
 
 public extension Boxing where Self: RawRepresentable, Self.RawValue :Boxing {
-    func box(object: NSManagedObject, withKey: String) throws {
+    func box(_ object: NSManagedObject, withKey: String) throws {
         return try self.rawValue.box(object, withKey: withKey)
     }
 }
 
 public extension Unboxing where Self.StructureType == Self, Self: RawRepresentable, Self.RawValue: Unboxing {
-    static func unbox(value: AnyObject) throws -> StructureType {
+    static func unbox(_ value: AnyObject) throws -> StructureType {
         let rawValue = try Self.RawValue.unbox(value)
-        if let r = rawValue as? Self.RawValue, enumValue = self.init(rawValue: r) {
+        if let r = rawValue as? Self.RawValue, let enumValue = self.init(rawValue: r) {
             return enumValue
         }
         
-        throw NSError(unboxErrorMessage: "\(self.dynamicType)")
+        throw NSError(unboxErrorMessage: "\(type(of: self))")
     }
 }
 
@@ -556,11 +558,11 @@ public extension Unboxing where Self.StructureType == Self, Self: RawRepresentab
 This error will be thrown if boxing fails because the core data model
 does not know or support the requested property
 */
-public enum CVManagedStructError : ErrorType {
-    case StructConversionError(message: String)
-    case StructValueError(message: String)
-    case StructUpdateError(message: String)
-    case StructDeleteError(message: String)
+public enum CVManagedStructError : Error {
+    case structConversionError(message: String)
+    case structValueError(message: String)
+    case structUpdateError(message: String)
+    case structDeleteError(message: String)
 }
 
 /**
@@ -568,34 +570,34 @@ Extend *Boxing* with code that utilizes reflection to convert a value type into 
 NSManagedObject
 */
 
-private func virginObjectForEntity(entity: String, context: NSManagedObjectContext?) -> NSManagedObject {
-    let desc = NSEntityDescription.entityForName(entity, inManagedObjectContext:(context ?? nil)!)
+private func virginObjectForEntity(_ entity: String, context: NSManagedObjectContext?) -> NSManagedObject {
+    let desc = NSEntityDescription.entity(forEntityName: entity, in:(context ?? nil)!)
     guard let _ = desc else {
         fatalError("entity \(entity) not found in Core Data Model")
     }
     
-    return NSManagedObject(entity: desc!, insertIntoManagedObjectContext: context)
+    return NSManagedObject(entity: desc!, insertInto: context)
 }
 
 private extension BoxingStruct {
-    private func managedObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
-        return virginObjectForEntity(self.dynamicType.EntityName, context: context)
+    func managedObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
+        return virginObjectForEntity(type(of: self).EntityName, context: context)
     }
 }
 
 private extension BoxingPersistentStruct {
-    private func managedObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+    func managedObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
         if let objectID = self.objectID,
-           ctx = context {
+           let ctx = context {
             do {
-                return try ctx.existingObjectWithID(objectID)
+                return try ctx.existingObject(with: objectID)
             } catch let error {
                 // In this case, we don't want to just insert a new object,
                 // instead we should tell the user about this issue.
-                throw CVManagedStructError.StructUpdateError(message: "Could not fetch object \(self) for id \(objectID): \(error)")
+                throw CVManagedStructError.structUpdateError(message: "Could not fetch object \(self) for id \(objectID): \(error)")
             }
         } else {
-            return virginObjectForEntity(self.dynamicType.EntityName, context: context)
+            return virginObjectForEntity(type(of: self).EntityName, context: context)
         }
     }
 }
@@ -603,67 +605,67 @@ private extension BoxingPersistentStruct {
 public extension BoxingUniqueStruct {
     
     
-    func managedObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+    func managedObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
         if let ctx = context {
             let predicate = try self.identifierPredicate()
             
             // Fetch requests go all the way down to the database. First, we see
             // if we can find the object in the set of registered objects already
             for registeredObject in ctx.registeredObjects {
-                if predicate.evaluateWithObject(registeredObject) {
+                if predicate.evaluate(with: registeredObject) {
                     return registeredObject
                 }
             }
             
             var managedObject: NSManagedObject
             
-            let fetchRequest = NSFetchRequest(entityName: self.dynamicType.EntityName)
+            let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: type(of: self).EntityName)
             fetchRequest.predicate = predicate
             
-            let fetchResults = try ctx.executeFetchRequest(fetchRequest)
+            let fetchResults = try ctx.fetch(fetchRequest)
             if let fetchedObject = fetchResults.first as? NSManagedObject {
                 managedObject = fetchedObject
             } else {
-                managedObject = virginObjectForEntity(self.dynamicType.EntityName, context: context)
+                managedObject = virginObjectForEntity(type(of: self).EntityName, context: context)
             }
             
             return managedObject
             
         } else {
-            return virginObjectForEntity(self.dynamicType.EntityName, context: context)
+            return virginObjectForEntity(type(of: self).EntityName, context: context)
         }
     }
     
     func identifierPredicate() throws -> NSPredicate {
-        let identifierName = self.dynamicType.IdentifierName
+        let identifierName = type(of: self).IdentifierName
         let identifierValue = self.IdentifierValue()
         return identifierValue.predicate(identifierName)
     }
     
     //TODO: Should check if object exists - This will create and delete object
-    func delete(context: NSManagedObjectContext?) throws {
+    @discardableResult func delete(_ context: NSManagedObjectContext?) throws {
         guard let ctx = context else { return }
         
         do {
             let object = try managedObject(context)
-            ctx.deleteObject(object)
+            ctx.delete(object)
             //Commit changes to remove object from the uniquing tables
             try ctx.save()
             
         } catch let error {
-            CVManagedStructError.StructDeleteError(message: "Could not locate object in context \(context): \(error)")
+            throw CVManagedStructError.structDeleteError(message: "Could not locate object in context \(context): \(error)")
         }
     }
     
     /**
      Default implementation of save function since Swift Structs can't have inheritance.
      */
-    func defaultSave(context: NSManagedObjectContext) throws {
+    func defaultSave(_ context: NSManagedObjectContext) throws {
         try self.toObject(context)
         try context.save()
     }
     
-    public func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+    @discardableResult public func toObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
         let result = try self.managedObject(context)
         return try internalToObject(context, result: result, entity: self)
     }
@@ -677,7 +679,7 @@ public extension BoxingUniqueStruct {
      try self.defaultSave(context)
      }
      */
-    func save(context: NSManagedObjectContext) throws {
+    func save(_ context: NSManagedObjectContext) throws {
         try self.defaultSave(context)
     }
 }
@@ -686,28 +688,28 @@ public extension Array where Element: BoxingUniqueStruct {
     /**
      Converts array to objects using one fetch request
      */
-    func toObjects(context: NSManagedObjectContext) throws -> [NSManagedObject] {
+    @discardableResult func toObjects(_ context: NSManagedObjectContext) throws -> [NSManagedObject] {
         var predicates: [NSPredicate] = []
         var objects: [NSManagedObject] = []
         
-        for (idx, _) in enumerate() {
+        for (idx, _) in enumerated() {
             predicates.append(try self[idx].identifierPredicate())
         }
         
         let predicate = NSCompoundPredicate(orPredicateWithSubpredicates: predicates)
         
-        let fetchRequest = NSFetchRequest(entityName: Element.EntityName)
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: Element.EntityName)
         fetchRequest.predicate = predicate
         
-        let fetchResults = try context.executeFetchRequest(fetchRequest)
+        let fetchResults = try context.fetch(fetchRequest)
         
-        for (idx, _) in enumerate() {
+        for (idx, _) in enumerated() {
             let object = self[idx]
             
             var managedObject: NSManagedObject
             
             let singlePredicate = try object.identifierPredicate()
-            let resultsWithIdentifier = (fetchResults as NSArray).filteredArrayUsingPredicate(singlePredicate)
+            let resultsWithIdentifier = (fetchResults as NSArray).filtered(using: singlePredicate)
             
             if let fetchedObject = resultsWithIdentifier.first as? NSManagedObject {
                 managedObject = fetchedObject
@@ -722,14 +724,14 @@ public extension Array where Element: BoxingUniqueStruct {
         return objects
     }
     
-    func saveAll(context: NSManagedObjectContext) throws {
+    func saveAll(_ context: NSManagedObjectContext) throws {
         try self.toObjects(context)
         try context.save()
     }
 }
 
 public extension BoxingStruct {
-    func toObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+    @discardableResult func toObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
         let result = try self.managedObject(context)
         
         return try internalToObject(context, result: result, entity: self)
@@ -737,7 +739,7 @@ public extension BoxingStruct {
 }
 
 public extension BoxingPersistentStruct {
-    mutating func mutatingToObject(context: NSManagedObjectContext?) throws -> NSManagedObject {
+    @discardableResult mutating func mutatingToObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
         
         // Only create an entity, if it doesn't exist yet, otherwise update it
         // We can detect existing entities via the objectID property that is part of UnboxingStruct
@@ -751,18 +753,18 @@ public extension BoxingPersistentStruct {
         }
         return result
     }
-    
-    mutating func delete(context: NSManagedObjectContext?) throws -> Bool {
-        guard let ctx = context, oid = self.objectID else { return false }
+
+    @discardableResult mutating func delete(_ context: NSManagedObjectContext?) throws -> Bool {
+        guard let ctx = context, let oid = self.objectID else { return false }
         
         do {
-            let object = try ctx.existingObjectWithID(oid)
-            ctx.deleteObject(object)
+            let object = try ctx.existingObject(with: oid)
+            ctx.delete(object)
             //Commit changes to remove object from the uniquing tables
             try ctx.save()
             
         } catch let error {
-            CVManagedStructError.StructDeleteError(message: "Could not locate object \(oid) in context \(context): \(error)")
+            throw CVManagedStructError.structDeleteError(message: "Could not locate object \(oid) in context \(context): \(error)")
         }
         
         return true
@@ -771,7 +773,7 @@ public extension BoxingPersistentStruct {
     /**
      Default implementation of save function since Swift Structs can't have inheritance.
      */
-    mutating func defaultSave(context: NSManagedObjectContext) throws {
+    mutating func defaultSave(_ context: NSManagedObjectContext) throws {
         try self.mutatingToObject(context)
     }
 
@@ -784,7 +786,7 @@ public extension BoxingPersistentStruct {
             try self.defaultSave(context)
         }
      */
-    mutating func save(context: NSManagedObjectContext) throws {
+    mutating func save(_ context: NSManagedObjectContext) throws {
         try self.defaultSave(context)
     }
 }
@@ -793,18 +795,18 @@ public extension Array where Element: BoxingPersistentStruct {
     /**
      Saves all persistant structs to context
      */
-    mutating func saveAll(context: NSManagedObjectContext) throws {
-        for (idx, _) in enumerate() {
+    mutating func saveAll(_ context: NSManagedObjectContext) throws {
+        for (idx, _) in enumerated() {
             try self[idx].save(context)
         }
      }
 }
 
-private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?, result: NSManagedObject, entity: T) throws -> NSManagedObject {
+private func internalToObject<T: BoxingStruct>(_ context: NSManagedObjectContext?, result: NSManagedObject, entity: T) throws -> NSManagedObject {
     
     let mirror = Mirror(reflecting: entity)
     
-    if let style = mirror.displayStyle where style == .Struct {
+    if let style = mirror.displayStyle , style == .struct {
         
         for (labelMaybe, valueMaybe) in mirror.children {
             
@@ -832,39 +834,39 @@ private func internalToObject<T: BoxingStruct>(context: NSManagedObjectContext?,
                 // We map the display style as well as the optional firt child,
                 switch (valueMirror.displayStyle, valueMirror.children.first) {
                     // Empty Optional
-                case (.Optional?, nil):
+                case (.optional?, nil):
                     result.setValue(nil, forKey: label)
                     // Optional with Value
-                case (.Optional?, let child?):
+                case (.optional?, let child?):
                     let optionalMirror: Mirror = Mirror(reflecting: child.value)
                     
                     switch (optionalMirror.displayStyle, optionalMirror.children.first) {
-                    case (.Collection?, _):
+                    case (.collection?, _):
                         try internalCollectionToSet(context, result: result, label: label, mirror: optionalMirror)
                     default:
                         if let value = child.value as? Boxing {
                             try value.box(result, withKey: label)
                         }else {
-                            result.setValue(child.value as? AnyObject, forKey: label)
+                            result.setValue(child.value, forKey: label)
                         }
                         break
                     }
                 // A collection of objects
-                case (.Collection?, _):
+                case (.collection?, _):
                     try internalCollectionToSet(context, result: result, label: label, mirror: valueMirror)
                 default:
                     // If we end up here, we were unable to decode it
-                    throw CVManagedStructError.StructValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
+                    throw CVManagedStructError.structValueError(message: "Could not decode value for field '\(label)' obj \(valueMaybe)")
                 }
             }
         }
         
         return result
     }
-    throw CVManagedStructError.StructConversionError(message: "Object is not a struct: \(entity)")
+    throw CVManagedStructError.structConversionError(message: "Object is not a struct: \(entity)")
 }
 
-private func internalCollectionToSet(context: NSManagedObjectContext?, result: NSManagedObject, label: String, mirror: Mirror) throws {
+private func internalCollectionToSet(_ context: NSManagedObjectContext?, result: NSManagedObject, label: String, mirror: Mirror) throws {
     var objects: [NSManagedObject] = []
     for (_, value) in mirror.children {
         if let boxedValue = value as? BoxingStruct {
@@ -874,12 +876,12 @@ private func internalCollectionToSet(context: NSManagedObjectContext?, result: N
     
     let orderedSet = NSOrderedSet(array: objects)
     
-    let mutableValue = result.mutableOrderedSetValueForKey(label)
+    let mutableValue = result.mutableOrderedSetValue(forKey: label)
     if objects.count == 0 {
         mutableValue.removeAllObjects()
     } else {
-        mutableValue.intersectOrderedSet(orderedSet) // removes objects that are not in new array
-        mutableValue.unionOrderedSet(orderedSet) // adds new objects
+        mutableValue.intersect(orderedSet) // removes objects that are not in new array
+        mutableValue.union(orderedSet) // adds new objects
     }
 }
 

@@ -306,9 +306,11 @@
 					};
 					4D5912801B498AF90022506E = {
 						CreatedOnToolsVersion = 7.0;
+						LastSwiftMigration = 0800;
 					};
 					4D5912891B498AF90022506E = {
 						CreatedOnToolsVersion = 7.0;
+						LastSwiftMigration = 0800;
 					};
 				};
 			};
@@ -585,6 +587,7 @@
 				PRODUCT_NAME = CoreValue;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -605,6 +608,7 @@
 				PRODUCT_NAME = CoreValue;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
@@ -618,6 +622,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.CoreValueMacTests;
 				PRODUCT_NAME = CoreValue;
 				SDKROOT = macosx;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -631,6 +636,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.CoreValueMacTests;
 				PRODUCT_NAME = CoreValue;
 				SDKROOT = macosx;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
