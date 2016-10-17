@@ -14,7 +14,9 @@
 - iOS and Mac OS X support
 - Use with `structs`
 - Works fine with `let` and `var` based properties
-- Swift 3.0 (for Swift 2.2 use [Version 0.2](https://github.com/terhechte/CoreValue/releases/tag/v0.2.0))
+- Swift 3.0 
+- (for Swift 2.3, use the [swift2.3" branch](https://github.com/terhechte/CoreValue/tree/swift2.3))
+- (for Swift 2.2 use [Version 0.2](https://github.com/terhechte/CoreValue/releases/tag/v0.2.0))
 
 ##Rationale
 
