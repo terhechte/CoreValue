@@ -20,7 +20,7 @@ struct StoredEmployee : CVManagedPersistentStruct {
     let department: String
     let job: String
 
-    static func fromObject(o: NSManagedObject) throws -> StoredEmployee {
+    static func fromObject(_ o: NSManagedObject) throws -> StoredEmployee {
         return try curry(self.init)
             <^> o <|? "objectID"
             <^> o <| "name"
@@ -38,14 +38,14 @@ struct StoredCompany: CVManagedPersistentStruct {
     var name: String
     var employees: Array<StoredEmployee>
 
-    static func fromObject(o: NSManagedObject) throws -> StoredCompany {
+    static func fromObject(_ o: NSManagedObject) throws -> StoredCompany {
         return try curry(self.init)
             <^> o <|? "objectID"
             <^> o <| "name"
             <^> o <|| "employees"
     }
 
-    mutating func save(context: NSManagedObjectContext) throws {
+    mutating func save(_ context: NSManagedObjectContext) throws {
         try employees.saveAll(context)
 
         try defaultSave(context)
@@ -58,7 +58,7 @@ struct StoredCompany: CVManagedPersistentStruct {
 class CoreValueCollectionsTests: XCTestCase {
 
     var context: NSManagedObjectContext = {
-        return setUpInMemoryManagedObjectContext(CoreValueMacTests)!
+        return setUpInMemoryManagedObjectContext(CoreValueMacTests.self)!
     }()
 
     var company: StoredCompany = {

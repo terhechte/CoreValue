@@ -19,7 +19,7 @@ struct Employee : CVManagedStruct {
     let department: String
     let job: String
     
-    static func fromObject(o: NSManagedObject) throws -> Employee {
+    static func fromObject(_ o: NSManagedObject) throws -> Employee {
         return try curry(self.init)
             <^> o <| "name"
             <^> o <| "age"
@@ -41,7 +41,7 @@ struct StoredShopEmployee : CVManagedPersistentStruct {
     let job: String
     let shop: StoredShop?
     
-    static func fromObject(o: NSManagedObject) throws -> StoredShopEmployee {
+    static func fromObject(_ o: NSManagedObject) throws -> StoredShopEmployee {
         return try curry(self.init)
             <^> o <|? "objectID"
             <^> o <| "name"
@@ -60,7 +60,7 @@ struct Shop: CVManagedStruct {
     var owner: Employee
     var products: Array<Product>?
     
-    static func fromObject(o: NSManagedObject) throws -> Shop {
+    static func fromObject(_ o: NSManagedObject) throws -> Shop {
         return try curry(self.init)
             <^> o <| "name"
             <^> o <| "owner"
@@ -74,7 +74,7 @@ struct Product: CVManagedStruct {
     var name: String
     var color: String
     
-    static func fromObject(o: NSManagedObject) throws -> Product {
+    static func fromObject(_ o: NSManagedObject) throws -> Product {
         return try curry(self.init)
             <^> o <| "name"
             <^> o <| "color"
@@ -87,7 +87,7 @@ struct Company: CVManagedStruct {
     var name: String
     var employees: Array<Employee>
     
-    static func fromObject(o: NSManagedObject) throws -> Company {
+    static func fromObject(_ o: NSManagedObject) throws -> Company {
         return try curry(self.init)
         <^> o <| "name"
         <^> o <|| "employees"
@@ -98,13 +98,13 @@ struct Other: CVManagedStruct {
     static let EntityName = "Other"
     
     var boolean: Bool
-    var data: NSData
-    var date: NSDate
+    var data: Data
+    var date: Date
     var decimal: NSDecimalNumber
     var double: Double
     var float: Float
     
-    static func fromObject(o: NSManagedObject) throws -> Other {
+    static func fromObject(_ o: NSManagedObject) throws -> Other {
         return try curry(self.init)
         <^> o <| "boolean"
         <^> o <| "data"
@@ -122,7 +122,7 @@ struct StoredShop: CVManagedPersistentStruct {
     var name: String
     var owner: Employee
     
-    static func fromObject(o: NSManagedObject) throws -> StoredShop {
+    static func fromObject(_ o: NSManagedObject) throws -> StoredShop {
         return try curry(self.init)
             <^> o <|? "objectID"
             <^> o <| "name"
@@ -137,7 +137,7 @@ struct StoredEmployeeShop: CVManagedPersistentStruct {
     var name: String
     var employees: [StoredShopEmployee]
     
-    static func fromObject(o: NSManagedObject) throws -> StoredEmployeeShop {
+    static func fromObject(_ o: NSManagedObject) throws -> StoredEmployeeShop {
         return try curry(self.init)
             <^> o <|? "objectID"
             <^> o <| "name"
@@ -159,7 +159,7 @@ struct Car: CVManagedPersistentStruct {
     var name: String
     var type: CarType
     
-    static func fromObject(o: NSManagedObject) throws -> Car {
+    static func fromObject(_ o: NSManagedObject) throws -> Car {
         return try curry(self.init)
             <^> o <|? "objectID"
             <^> o <| "name"
@@ -185,7 +185,7 @@ struct UniqueShopEmployee : CVManagedUniqueStruct {
     let job: String
     let shop: StoredShop?
     
-    static func fromObject(o: NSManagedObject) throws -> UniqueShopEmployee {
+    static func fromObject(_ o: NSManagedObject) throws -> UniqueShopEmployee {
         return try curry(self.init)
             <^> o <| "name"
             <^> o <| "age"
@@ -208,7 +208,7 @@ struct UniqueEmployeeShop: CVManagedUniqueStruct {
     var name: String
     var employees: [UniqueShopEmployee]
     
-    static func fromObject(o: NSManagedObject) throws -> UniqueEmployeeShop {
+    static func fromObject(_ o: NSManagedObject) throws -> UniqueEmployeeShop {
         return try curry(self.init)
             <^> o <| "name"
             <^> o <|| "employees"
@@ -218,7 +218,7 @@ struct UniqueEmployeeShop: CVManagedUniqueStruct {
 
 
 /// Attempt f, fail test if it throws
-func testTry(@noescape f: () throws -> ()) {
+func testTry(_ f: () throws -> ()) {
     do {
         try f()
     } catch let error as NSError {
@@ -226,20 +226,20 @@ func testTry(@noescape f: () throws -> ()) {
     }
 }
 
-func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext? {
-    let b = NSBundle(forClass: cls)
-    let modelURL = b.URLForResource("CoreValueTests", withExtension: "mom")!
-    let managedObjectModel = NSManagedObjectModel(contentsOfURL: modelURL)!
+func setUpInMemoryManagedObjectContext(_ cls: AnyClass) -> NSManagedObjectContext? {
+    let b = Bundle(for: cls)
+    let modelURL = b.url(forResource: "CoreValueTests", withExtension: "mom")!
+    let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL)!
     
     let persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
     do {
-        try persistentStoreCoordinator.addPersistentStoreWithType(NSInMemoryStoreType, configuration: nil, URL: nil, options: nil)
+        try persistentStoreCoordinator.addPersistentStore(ofType: NSInMemoryStoreType, configurationName: nil, at: nil, options: nil)
     } catch _ {
         return nil
     }
 
-    assert(NSThread.isMainThread())
-    let managedObjectContext = NSManagedObjectContext(concurrencyType: .MainQueueConcurrencyType)
+    assert(Thread.isMainThread)
+    let managedObjectContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
     managedObjectContext.persistentStoreCoordinator = persistentStoreCoordinator
     
     return managedObjectContext
@@ -249,7 +249,7 @@ func setUpInMemoryManagedObjectContext(cls: AnyClass) -> NSManagedObjectContext?
 class CoreValueMacTests: XCTestCase {
     
     var context: NSManagedObjectContext = {
-        return setUpInMemoryManagedObjectContext(CoreValueMacTests)!
+        return setUpInMemoryManagedObjectContext(CoreValueMacTests.self)!
     }()
     
     let employee1 = {
@@ -277,7 +277,7 @@ class CoreValueMacTests: XCTestCase {
     var nsCompany: NSManagedObject!
     
     let other = {
-        return Other(boolean: true, data: NSData(), date: NSDate(), decimal: NSDecimalNumber(), double: 10, float: 20)
+        return Other(boolean: true, data: Data(), date: Date(), decimal: NSDecimalNumber(), double: 10, float: 20)
     }()
     
     var nsOther: NSManagedObject!
@@ -286,9 +286,9 @@ class CoreValueMacTests: XCTestCase {
         super.setUp()
         do {
             self.nsEmployee1 = try self.employee1.toObject(self.context)
-        }catch CVManagedStructError.StructConversionError(let msg) {
+        }catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch CVManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.structValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -298,9 +298,9 @@ class CoreValueMacTests: XCTestCase {
         self.nsEmployee2 = try! self.employee2.toObject(self.context)
         do {
             self.nsShop = try self.shop.toObject(self.context)
-        } catch CVManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch CVManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.structValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -309,9 +309,9 @@ class CoreValueMacTests: XCTestCase {
         
         do {
             self.nsCompany = try self.company.toObject(self.context)
-        } catch CVManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch CVManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.structValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -320,9 +320,9 @@ class CoreValueMacTests: XCTestCase {
         
         do {
             self.nsOther = try self.other.toObject(self.context)
-        } catch CVManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch CVManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.structValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -338,15 +338,15 @@ class CoreValueMacTests: XCTestCase {
     func testToCoreDataNonNil() {
         do {
             let cd = try self.employee1.toObject(self.context)
-            if (cd.valueForKey("name") as! String) != self.employee1.name {
+            if (cd.value(forKey: "name") as! String) != self.employee1.name {
                 XCTAssert(false, "Conversion failed: name")
             }
-            if (cd.valueForKey("age") as! NSNumber).integerValue != Int(self.employee1.age) {
+            if (cd.value(forKey: "age") as! NSNumber).intValue != Int(self.employee1.age) {
                 XCTAssert(false, "Conversion failed: age")
             }
-        } catch CVManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch CVManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.structValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -357,18 +357,18 @@ class CoreValueMacTests: XCTestCase {
     func testToCoreDataNil() {
         do {
             let cd = try self.employee2.toObject(self.context)
-            if (cd.valueForKey("name") as! String) != self.employee2.name {
+            if (cd.value(forKey: "name") as! String) != self.employee2.name {
                 XCTAssert(false, "Conversion failed: name")
             }
-            if (cd.valueForKey("age") as! NSNumber).integerValue != Int(self.employee2.age) {
+            if (cd.value(forKey: "age") as! NSNumber).intValue != Int(self.employee2.age) {
                 XCTAssert(false, "Conversion failed: age")
             }
-            if (cd.valueForKey("position") != nil) {
+            if (cd.value(forKey: "position") != nil) {
                 XCTAssert(false, "Conversion failed: age")
             }
-        } catch CVManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch CVManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.structValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -400,15 +400,21 @@ class CoreValueMacTests: XCTestCase {
     func testToCoreDataSub() {
         do {
             let cd = try self.shop.toObject(self.context)
-            if (cd.valueForKey("name") as! String) != self.shop.name {
+            if (cd.value(forKey: "name") as! String) != self.shop.name {
                 XCTAssert(false, "Conversion failed: name")
             }
-            if ((cd.valueForKey("owner")?.valueForKey("name") as! String) != self.shop.owner.name) {
-                XCTAssert(false, "Conversion failed: owner's name")
+            guard let owner = cd.value(forKey: "owner") as? NSManagedObject,
+                let name = owner.value(forKey: "name") as? String,
+                name == self.shop.owner.name else {
+                    XCTAssert(false, "Conversion failed: owner's name")
+                    return
             }
-        } catch CVManagedStructError.StructConversionError(let msg) {
+//            if ((cd.value(forKey: "owner")?.value(forKey: "name") as! String) != self.shop.owner.name) {
+//
+//            }
+        } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch CVManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.structValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -429,23 +435,33 @@ class CoreValueMacTests: XCTestCase {
     func testToCoreDataSubArray() {
         do {
             let cd = try self.company.toObject(self.context)
-            if (cd.valueForKey("name") as! String) != self.company.name {
+            if (cd.value(forKey: "name") as! String) != self.company.name {
                 XCTAssert(false, "Conversion failed: name")
             }
-            if ((cd.valueForKey("employees")?.firstObject?!.valueForKey("name") as! String) != self.company.employees[0].name) {
-                XCTAssert(false, "Conversion failed: employee's name")
+            
+            guard let employees = cd.value(forKey: "employees") as? NSOrderedSet,
+                let firstEmployee = employees.firstObject as? NSManagedObject,
+                let lastEmployee = employees.lastObject as? NSManagedObject,
+                let firstName = firstEmployee.value(forKey: "name") as? String,
+                let lastName = lastEmployee.value(forKey: "name") as? String,
+                firstName == self.company.employees[0].name
+                else {
+                    XCTAssert(false, "Conversion failed: employee's name")
+                    return
             }
-            if ((cd.valueForKey("employees")?.lastObject?!.valueForKey("name") as! String) != self.company.employees.last?.name) {
+            guard lastName == self.company.employees.last?.name else {
                 XCTAssert(false, "Conversion failed: employee's order")
+                return
             }
-            if let ab:NSOrderedSet = cd.valueForKey("employees") as? NSOrderedSet {
-                if ab.count != self.company.employees.count {
-                    XCTAssert(false, "Did not box all employees")
-                }
+            
+
+            if employees.count != self.company.employees.count {
+                XCTAssert(false, "Did not box all employees")
             }
-        } catch CVManagedStructError.StructConversionError(let msg) {
+
+        } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch CVManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.structValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -473,33 +489,33 @@ class CoreValueMacTests: XCTestCase {
         do {
             let cd = try self.other.toObject(self.context)
             
-            if (cd.valueForKey("boolean") as! NSNumber).boolValue != self.other.boolean {
+            if (cd.value(forKey: "boolean") as! NSNumber).boolValue != self.other.boolean {
                 XCTAssert(false, "Conversion failed: boolean")
             }
             
-            guard cd.valueForKey("data") is NSData else {
+            guard cd.value(forKey: "data") is NSData else {
                 XCTAssert(false, "Conversion failed: nsdata")
                 return
             }
             
-            guard cd.valueForKey("date") is NSDate else {
+            guard cd.value(forKey: "date") is NSDate else {
                 XCTAssert(false, "Conversion failed: nsdate")
                 return
             }
             
-            guard cd.valueForKey("decimal") is NSDecimalNumber else {
+            guard cd.value(forKey: "decimal") is NSDecimalNumber else {
                 XCTAssert(false, "Conversion failed: decimal")
                 return
             }
             
-            guard cd.valueForKey("double") is NSNumber else {
+            guard cd.value(forKey: "double") is NSNumber else {
                 XCTAssert(false, "Conversion failed: double")
                 return
             }
             
-        } catch CVManagedStructError.StructConversionError(let msg) {
+        } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
-        } catch CVManagedStructError.StructValueError(let msg) {
+        } catch CVManagedStructError.structValueError(let msg) {
             XCTAssert(false, msg)
         } catch let e {
             print(e)
@@ -511,7 +527,7 @@ class CoreValueMacTests: XCTestCase {
         let car1 = Car(objectID: nil, name: "Super Sedan", type: .Sedan)
         do {
            let cd = try car1.toObject(context)
-            if (cd.valueForKey("type") as! String) != CarType.Sedan.rawValue {
+            if (cd.value(forKey: "type") as! String) != CarType.Sedan.rawValue {
                 XCTAssert(false, "Boxing failed: Raw Represantable String")
             }
             
@@ -554,7 +570,7 @@ class CoreValueMacTests: XCTestCase {
 class CoreValueQueryTests: XCTestCase {
     
     var context: NSManagedObjectContext = {
-        return setUpInMemoryManagedObjectContext(CoreValueMacTests)!
+        return setUpInMemoryManagedObjectContext(CoreValueMacTests.self)!
     }()
     
     var manyEmployees: [NSManagedObject] = []
@@ -576,7 +592,7 @@ class CoreValueQueryTests: XCTestCase {
         // Important, the results: [Employee] is required for the type checker to figure things out
         testTry {
             let predicate = NSPredicate(format: "age > 10 and age < 12", argumentArray: nil)
-            let results: [Employee] = try Employee.query(self.context, predicate: predicate) ?? []
+            let results: [Employee] = try Employee.query(self.context, predicate: predicate)
             if results.count != 1 {
                 XCTAssert(false, "Wrong amount for you ones \(results.count)")
             }
@@ -682,7 +698,7 @@ class CoreValueQueryTests: XCTestCase {
 class CoreValuePerformanceTests: XCTestCase {
     
     var context: NSManagedObjectContext = {
-        return setUpInMemoryManagedObjectContext(CoreValueMacTests)!
+        return setUpInMemoryManagedObjectContext(CoreValueMacTests.self)!
     }()
     
     var manyCompanies: [Company] = {
@@ -722,11 +738,11 @@ class CoreValuePerformanceTests: XCTestCase {
     }()
     
     func testBoxPerformance() {
-        self.measureBlock {
+        self.measure {
             testTry {
                 let results: [NSManagedObject] = try self.manyCompanies.map { company in
                     let managedCompany = try company.toObject(self.context)
-                    XCTAssert(managedCompany.valueForKey("name") as? String == company.name)
+                    XCTAssert(managedCompany.value(forKey: "name") as? String == company.name)
                     return managedCompany
                 }
                 XCTAssert(results.count == self.manyCompanies.count, "Boxed Companies have to be the same amount of entities")
@@ -735,12 +751,12 @@ class CoreValuePerformanceTests: XCTestCase {
     }
     
     func testBoxPersistentPerformance() {
-        self.measureBlock {
+        self.measure {
             testTry {
                 let results: [NSManagedObject] = try self.manyStoredShops.map { shop in
                     var mutatedShop = shop
                     let managedShop = try mutatedShop.mutatingToObject(self.context)
-                    XCTAssert(managedShop.valueForKey("name") as? String == shop.name)
+                    XCTAssert(managedShop.value(forKey: "name") as? String == shop.name)
                     return managedShop
                 }
                 XCTAssert(results.count == self.manyStoredShops.count, "Boxed Companies have to be the same amount of entities")
@@ -749,11 +765,11 @@ class CoreValuePerformanceTests: XCTestCase {
     }
     
     func testBoxUniquePerformance() {
-        self.measureBlock {
+        self.measure {
             testTry {
                 let results: [NSManagedObject] = try self.manyUniqueShops.map { shop in
                     let managedShop = try shop.toObject(self.context)
-                    XCTAssert(managedShop.valueForKey("name") as? String == shop.name)
+                    XCTAssert(managedShop.value(forKey: "name") as? String == shop.name)
                     return managedShop
                 }
                 XCTAssert(results.count == self.manyUniqueShops.count, "Boxed Companies have to be the same amount of entities")
@@ -762,7 +778,7 @@ class CoreValuePerformanceTests: XCTestCase {
     }
     
     func testBoxUniqueInBatchPerformance() {
-        self.measureBlock {
+        self.measure {
             testTry {
                 let results: [NSManagedObject] = try self.manyUniqueShops.toObjects(self.context)
                 XCTAssert(results.count == self.manyUniqueShops.count, "Boxed Companies have to be the same amount of entities")
@@ -774,11 +790,11 @@ class CoreValuePerformanceTests: XCTestCase {
         testTry {
             let results: [NSManagedObject] = try manyCompanies.map { company in
                 let managedCompany = try company.toObject(self.context)
-                XCTAssert(managedCompany.valueForKey("name") as? String == company.name)
+                XCTAssert(managedCompany.value(forKey: "name") as? String == company.name)
                 return managedCompany
             }
             
-            self.measureBlock {
+            self.measure {
                 testTry {
                     let entities = try results.map {
                         try Company.fromObject($0)
