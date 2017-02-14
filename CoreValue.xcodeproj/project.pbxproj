@@ -301,9 +301,11 @@
 				TargetAttributes = {
 					4D5912571B4989FB0022506E = {
 						CreatedOnToolsVersion = 7.0;
+						LastSwiftMigration = 0820;
 					};
 					4D5912611B4989FB0022506E = {
 						CreatedOnToolsVersion = 7.0;
+						LastSwiftMigration = 0820;
 					};
 					4D5912801B498AF90022506E = {
 						CreatedOnToolsVersion = 7.0;
@@ -537,6 +539,7 @@
 				PRODUCT_NAME = CoreValue;
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -556,6 +559,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.CoreValue;
 				PRODUCT_NAME = CoreValue;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
@@ -566,6 +570,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.CoreValueTests;
 				PRODUCT_NAME = CoreValue;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -576,6 +581,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.CoreValueTests;
 				PRODUCT_NAME = CoreValue;
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
