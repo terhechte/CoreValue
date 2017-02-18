@@ -1,0 +1,8 @@
+language: objective-c
+
+branches:
+ only:
+ - master
+
+xcode_project: CoreValue.xcodeproj
+xcode_scheme: CoreValue
