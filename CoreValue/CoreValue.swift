@@ -739,6 +739,20 @@ public extension BoxingStruct {
 }
 
 public extension BoxingPersistentStruct {
+    
+    /**
+     Bug Fix #19, Duplicate entries:
+     The func toObject(...) is duplicated here on purpose.
+     Because there is no polymorphism in protocol extensions.
+     Otherwise, when a BoxingPersistentStruct is asked to execute toObject(..) the BoxingStruct func will be executed.
+     In that case, since the struct is casted as BoxingStruct, the BoxingStruct's  managedObject(...) func will execute, and that will always return a virginObject
+     **/
+    @discardableResult func toObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
+        let result = try self.managedObject(context)
+        
+        return try internalToObject(context, result: result, entity: self)
+    }
+    
     @discardableResult mutating func mutatingToObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
         
         // Only create an entity, if it doesn't exist yet, otherwise update it

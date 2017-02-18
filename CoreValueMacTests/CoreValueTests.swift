@@ -9,6 +9,35 @@
 import XCTest
 import CoreData
 
+struct SmallEmployee : CVManagedPersistentStruct{
+    static let EntityName = "Employee"
+    
+    var objectID: NSManagedObjectID?
+    let name: String
+    
+    static func fromObject(_ o: NSManagedObject) throws -> SmallEmployee {
+        return try curry(self.init)
+            <^> o <|? "objectID"
+            <^> o <| "name"
+    }
+    
+}
+
+struct SmallShop : CVManagedPersistentStruct{
+    static let EntityName = "Shop"
+    
+    var objectID: NSManagedObjectID?
+    let name: String
+    var employees: [SmallEmployee]
+    
+    static func fromObject(_ o: NSManagedObject) throws -> SmallShop {
+        return try curry(self.init)
+            <^> o <|? "objectID"
+            <^> o <| "name"
+            <^> o <|| "employees"
+    }
+}
+
 struct Employee : CVManagedStruct {
     
     static let EntityName = "Employee"
@@ -89,8 +118,8 @@ struct Company: CVManagedStruct {
     
     static func fromObject(_ o: NSManagedObject) throws -> Company {
         return try curry(self.init)
-        <^> o <| "name"
-        <^> o <|| "employees"
+            <^> o <| "name"
+            <^> o <|| "employees"
     }
 }
 
@@ -106,12 +135,12 @@ struct Other: CVManagedStruct {
     
     static func fromObject(_ o: NSManagedObject) throws -> Other {
         return try curry(self.init)
-        <^> o <| "boolean"
-        <^> o <| "data"
-        <^> o <| "date"
-        <^> o <| "decimal"
-        <^> o <| "double"
-        <^> o <| "float"
+            <^> o <| "boolean"
+            <^> o <| "data"
+            <^> o <| "date"
+            <^> o <| "decimal"
+            <^> o <| "double"
+            <^> o <| "float"
     }
 }
 
@@ -237,7 +266,7 @@ func setUpInMemoryManagedObjectContext(_ cls: AnyClass) -> NSManagedObjectContex
     } catch _ {
         return nil
     }
-
+    
     assert(Thread.isMainThread)
     let managedObjectContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
     managedObjectContext.persistentStoreCoordinator = persistentStoreCoordinator
@@ -381,7 +410,7 @@ class CoreValueMacTests: XCTestCase {
             let t = try Employee.fromObject(self.nsEmployee1)
             if t.name != self.employee1.name ||
                 t.age != self.employee1.age {
-                    XCTAssert(false, "Conversion Error")
+                XCTAssert(false, "Conversion Error")
             }
         }
     }
@@ -392,7 +421,7 @@ class CoreValueMacTests: XCTestCase {
             if t.name != self.employee2.name ||
                 t.age != self.employee2.age ||
                 t.position != nil {
-                    XCTAssert(false, "Conversion Error")
+                XCTAssert(false, "Conversion Error")
             }
         }
     }
@@ -409,9 +438,9 @@ class CoreValueMacTests: XCTestCase {
                     XCTAssert(false, "Conversion failed: owner's name")
                     return
             }
-//            if ((cd.value(forKey: "owner")?.value(forKey: "name") as! String) != self.shop.owner.name) {
-//
-//            }
+            //            if ((cd.value(forKey: "owner")?.value(forKey: "name") as! String) != self.shop.owner.name) {
+            //
+            //            }
         } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
         } catch CVManagedStructError.structValueError(let msg) {
@@ -427,7 +456,7 @@ class CoreValueMacTests: XCTestCase {
             let t = try Shop.fromObject(self.nsShop)
             if t.name != self.shop.name ||
                 t.owner.name != self.shop.owner.name {
-                    XCTAssert(false, "Conversion Error")
+                XCTAssert(false, "Conversion Error")
             }
         }
     }
@@ -454,11 +483,11 @@ class CoreValueMacTests: XCTestCase {
                 return
             }
             
-
+            
             if employees.count != self.company.employees.count {
                 XCTAssert(false, "Did not box all employees")
             }
-
+            
         } catch CVManagedStructError.structConversionError(let msg) {
             XCTAssert(false, msg)
         } catch CVManagedStructError.structValueError(let msg) {
@@ -474,7 +503,7 @@ class CoreValueMacTests: XCTestCase {
             let t = try Company.fromObject(self.nsCompany)
             if t.name != self.company.name ||
                 t.employees[0].name != self.company.employees[0].name {
-                    XCTAssert(false, "Conversion Error")
+                XCTAssert(false, "Conversion Error")
             }
             if t.employees.count != self.company.employees.count {
                 XCTAssert(false, "Wrong amount of employees")
@@ -526,7 +555,7 @@ class CoreValueMacTests: XCTestCase {
     func testRawRepresentableToCoreData() {
         let car1 = Car(objectID: nil, name: "Super Sedan", type: .Sedan)
         do {
-           let cd = try car1.toObject(context)
+            let cd = try car1.toObject(context)
             if (cd.value(forKey: "type") as! String) != CarType.Sedan.rawValue {
                 XCTAssert(false, "Boxing failed: Raw Represantable String")
             }
@@ -566,6 +595,53 @@ class CoreValueMacTests: XCTestCase {
     }
 }
 
+class CoreValueDuplicateTests: XCTestCase {
+    
+    var context: NSManagedObjectContext = {
+        return setUpInMemoryManagedObjectContext(CoreValueMacTests.self)!
+    }()
+    
+    
+    private var countSmallEmployees : Int{
+        let all : [SmallEmployee] = try! SmallEmployee.query(context, predicate: nil)
+        let count = all.count
+        return count
+    }
+    
+    func save2Shops(with employee : SmallEmployee){
+        var shop1 = SmallShop(objectID: nil, name: "Shop 1", employees: [employee])
+        var shop2 = SmallShop(objectID: nil, name: "Shop 2", employees: [employee])
+        
+        try! shop1.save(context)
+        try! shop2.save(context)
+        
+        let shops : [SmallShop] = try! SmallShop.query(context, predicate: nil)
+        XCTAssertEqual(shops.count,2)
+    }
+    
+    func test2Shops1Employee() {
+        
+        let originalCount = self.countSmallEmployees
+        
+        let employee = SmallEmployee(objectID: nil, name: "John Doe")
+        
+        self.save2Shops(with:employee)
+        
+        XCTAssertEqual(originalCount+2, self.countSmallEmployees)
+    }
+    
+    func test2Shops1EmployeeSavingEmployeeFirst() {
+        
+        let originalCount = self.countSmallEmployees
+        
+        var employee = SmallEmployee(objectID: nil, name: "John Doe")
+        try! employee.save(context)
+        
+        self.save2Shops(with:employee)
+        
+        XCTAssertEqual(originalCount+1, self.countSmallEmployees)
+    }
+}
 
 class CoreValueQueryTests: XCTestCase {
     
@@ -691,6 +767,29 @@ class CoreValueQueryTests: XCTestCase {
         let shops:[StoredEmployeeShop] = try! StoredEmployeeShop.query(context, predicate: nil)
         print(shops)
         XCTAssertNotNil(shops)
+    }
+    
+    var employeesCount : Int{
+        let employees : [StoredShopEmployee] = try! StoredShopEmployee.query(context, predicate: nil)
+        return  employees.count
+    }
+    
+    func testDuplicateEntries() {
+        let beforeCount = self.employeesCount
+        
+        var employee = StoredShopEmployee(objectID: nil, name: "John", age: 18, position: "Clerk", department: "All", job: "Clerk", shop:nil)
+        
+        try! employee.save(context)
+        
+        XCTAssertEqual(beforeCount + 1, self.employeesCount)
+        
+        var shop1 = StoredEmployeeShop(objectID: nil, name: "Carpet shop 1", employees: [employee])
+        var shop2 = StoredEmployeeShop(objectID: nil, name: "Carpet shop 2", employees: [employee])
+        
+        try! shop1.save(context)
+        try! shop2.save(context)
+        
+        XCTAssertEqual(beforeCount + 1, self.employeesCount)
     }
 }
 

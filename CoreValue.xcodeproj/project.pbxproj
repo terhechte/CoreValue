@@ -65,6 +65,7 @@
 		4D59128F1B498AFA0022506E /* CoreValueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; lineEnding = 0; name = CoreValueTests.swift; path = CoreValueMacTests/CoreValueTests.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		4D5912911B498AFA0022506E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4D6AEB981B4DEAE100DDD5E1 /* curry.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = curry.swift; sourceTree = "<group>"; };
+		9C30B06A1E52821700AE3459 /* MyPlayground.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = MyPlayground.playground; sourceTree = "<group>"; };
 		AC9017791D3AE28100F33670 /* UniqueTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = UniqueTests.swift; path = CoreValueMacTests/UniqueTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -137,6 +138,7 @@
 		4D59124E1B4989FB0022506E = {
 			isa = PBXGroup;
 			children = (
+				9C30B06A1E52821700AE3459 /* MyPlayground.playground */,
 				4D59125A1B4989FB0022506E /* CoreValue */,
 				4D391F2C1B5405DB00C66C90 /* CoreValue-iOS */,
 				4D5912821B498AF90022506E /* CoreValue-Mac */,
@@ -301,10 +303,15 @@
 				TargetAttributes = {
 					4D5912571B4989FB0022506E = {
 						CreatedOnToolsVersion = 7.0;
-						LastSwiftMigration = 0810;
+
+						LastSwiftMigration = 0820;
+
+
+
 					};
 					4D5912611B4989FB0022506E = {
 						CreatedOnToolsVersion = 7.0;
+						LastSwiftMigration = 0820;
 					};
 					4D5912801B498AF90022506E = {
 						CreatedOnToolsVersion = 7.0;
@@ -538,7 +545,11 @@
 				PRODUCT_NAME = CoreValue;
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+
+
+
 				SWIFT_VERSION = 3.0.1;
+
 			};
 			name = Debug;
 		};
@@ -558,7 +569,11 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.CoreValue;
 				PRODUCT_NAME = CoreValue;
 				SKIP_INSTALL = YES;
+
+
+
 				SWIFT_VERSION = 3.0.1;
+
 			};
 			name = Release;
 		};
@@ -569,7 +584,11 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.CoreValueTests;
 				PRODUCT_NAME = CoreValue;
+
+
+
 				SWIFT_VERSION = 3.0.1;
+
 			};
 			name = Debug;
 		};
@@ -580,7 +599,11 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.terhechte.CoreValueTests;
 				PRODUCT_NAME = CoreValue;
+
+
+
 				SWIFT_VERSION = 3.0.1;
+
 			};
 			name = Release;
 		};
