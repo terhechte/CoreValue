@@ -4,6 +4,7 @@
 <a href="https://github.com/Carthage/Carthage"><img src="https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat" /></a>
 <a href="https://cocoapods.org"><img src="https://img.shields.io/cocoapods/v/CoreValue.svg" /></a>
 <img src="https://img.shields.io/cocoapods/p/CoreValue.svg" />
+<a href="https://travis-ci.org/terhechte/CoreValue"><img src="https://travis-ci.org/terhechte/CoreValue.svg?branch=master" /></a>
 </p>
 
 
