@@ -9,7 +9,7 @@
 
 
 
-##Features
+## Features
 
 - Uses Swift Reflection to convert value types to NSManagedObjects
 - iOS and Mac OS X support
@@ -19,7 +19,7 @@
 - (for Swift 2.3, use the [swift2.3" branch](https://github.com/terhechte/CoreValue/tree/swift2.3))
 - (for Swift 2.2 use [Version 0.2](https://github.com/terhechte/CoreValue/releases/tag/v0.2.0))
 
-##Rationale
+## Rationale
 
 Swift introduced versatile value types into the iOS and Cocoa development domains. They're lightweight, fast, safe, enforce immutability and much more. However, as soon as the need for CoreData in a project manifests itself, we have to go back to reference types and `@objc`. 
 
@@ -27,16 +27,16 @@ CoreValue is a lightweight wrapper framework around Core Data. It takes care of 
 
 If you're porting your app to Swift 3, please see the Swift 3 section at the bottom.
 
-##Usage
+## Usage
 
 The following struct supports boxing, unboxing, and keeping object state:
 
-``` Swift
+```swift
 struct Shop: CVManagedPersistentStruct {
-    
+
     // The name of the CoreData entity
     static let EntityName = "Shop"
-    
+
     // The ObjectID of the CoreData object we saved to or loaded from
     var objectID: NSManagedObjectID?
     
@@ -44,8 +44,8 @@ struct Shop: CVManagedPersistentStruct {
     let name: String
     var age: Int32
     var owner: Owner?
-    
-    // Create a Value Type from a NSManagedObject
+
+    // Create a Value Type from an NSManagedObject
     // If this looks too complex, see below for an explanation and alternatives
     static func fromObject(_ o: NSManagedObject) throws -> XShop {
         return try curry(self.init)
@@ -61,71 +61,67 @@ struct Shop: CVManagedPersistentStruct {
 That's it. Everything else it automated from here. Here're some examples of what you can do with `Shop` then:
 
 
-``` Swift
-	// Get all shops (`[Shop]` is required for the type checker to get your intent!)
-	let shops: [Shop] = Shop.query(self.context, predicate: nil)
-	
-	// Create a shop
-	let aShop = Shop(objectID: nil, name: "Household Wares", age: 30, owner: nil)
-	
-	// Store it as a managed object
-	aShop.save(self.context)
-	
-	// Change the age
-	aShop.age = 40
-	
-	// Update the managed object in the store
-	aShop.save(self.context)
-	
-	// Delete the object
-	aShop.delete(self.context)
-	
-	// Convert a managed object into a shop (see below)
-	let nsShop: Shop? = try? Shop.fromObject(aNSManagedObject)
-	
-	// Convert a shop into an nsmanagedobject
-	let shopObj = nsShop.mutatingToObject(self.context)
-	
+```swift
+// Get all shops (`[Shop]` is required for the type checker to get your intent!)
+let shops: [Shop] = Shop.query(self.context, predicate: nil)
+
+// Create a shop
+let aShop = Shop(objectID: nil, name: "Household Wares", age: 30, owner: nil)
+
+// Store it as a managed object
+aShop.save(self.context)
+
+// Change the age
+aShop.age = 40
+
+// Update the managed object in the store
+aShop.save(self.context)
+
+// Delete the object
+aShop.delete(self.context)
+
+// Convert a managed object into a shop (see below)
+let nsShop: Shop? = try? Shop.fromObject(aNSManagedObject)
+
+// Convert a shop into an nsmanagedobject
+let shopObj = nsShop.mutatingToObject(self.context)
 ```
-
-
 
 ## Querying
 
 There're two ways of querying objects from Core Data into values:
 
-``` Swift
+```swift
 // With Sort Descriptors
-public static func query(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: Array<NSSortDescriptor>) -> Array
+public static func query(context: NSManagedObjectContext, predicate: NSPredicate?, sortDescriptors: [NSSortDescriptor]) -> Array
     
 // Without sort descriptors
 public static func query(context: NSManagedObjectContext, predicate: NSPredicate?) -> Array
-
 ```
 
-If no NSPredicate is given, all objects for the selected Entity are returned.
+If no `NSPredicate` is given, all objects for the selected Entity are returned.
 
-##Usage in Detail
+## Usage in Detail
 
-`CVManagedPersistentStruct` is a type alias for the two primary protocols of CoreValue: `BoxingPersistentStruct`, `UnboxingStruct`.
+`CVManagedPersistentStruct` is a `typealias` for the two primary protocols of CoreValue: `BoxingPersistentStruct` and `UnboxingStruct`.
 
 Let's see what they do.
 
 ### BoxingPersistentStruct
 
-Boxing is the process of taking a value type and returning a NSManagedObject. CoreValue really loves you and that's why it does all the hard work for you via Swift's `Reflection` feature. See for yourself:
+Boxing is the process of taking a value type and returning an `NSManagedObject`. CoreValue really loves you and that's why it does all the hard work for you via Swift's `Reflection` feature. See for yourself:
 
-``` Swift
-struct Counter : BoxingStruct
+```swift
+struct Counter: BoxingStruct
     static let EntityName = "Counter"
-	var count: Int
-	let name: String
+    var count: Int
+    let name: String
 }
 ```
 
-That's it. Your value type is now Core Data compliant. Just call `aCounter.toObject(context)` and you'll get a properly encoded `NSManagedObject`!
+That's it. Your value type is now CoreData compliant. Just call `aCounter.toObject(context)` and you'll get a properly encoded `NSManagedObject`!
 
-If you're interested, have a look at the `internalToObject` function in CoreValue.swift, which takes care of this.
+If you're interested, have a look at the `internalToObject` function in [CoreValue.swift](/CoreValue/CoreValue.swift), which takes care of this.
 
 #### Boxing in Detail
 
@@ -133,37 +129,37 @@ Keen observers will have noted that the structure above actually doesn't impleme
 
 By default, Value types are immutable, so even if you define a property as a var, you still can't change it from within except by declaring your function mutable. Swift also doesn't allow us to define properties in protocol extensions, so any state that we wish to assign on a value type has to be via specific properties on the value type.
 
-When we create or load an NSManagedObject from Core Data, we need a way to store the connection to the original NSManagedObject in the value type. Otherwise, calling save again (say after updating the value type) would not update the NSManagedObject in question, but instead *insert a new NSManagedObject* into the store. That's obviously not what we want.
+When we create or load an `NSManagedObject` from CoreData, we need a way to store the connection to the original `NSManagedObject` in the value type. Otherwise, calling `save` again (say after updating the value type) would not update the `NSManagedObject` in question, but instead *insert a new `NSManagedObject`* into the store. That's obviously not what we want.
 
 Since we cannot implicitly add any state whatsoever to a protocol, we have to do this explicitly. That's why there's a separate protocol for persistent storage:
 
 ``` Swift
-struct Counter : BoxingPersistentStruct
+struct Counter: BoxingPersistentStruct
     let EntityName = "Counter"
-    
+
     var objectID: NSManagedObjectID?
-    
-	var count: Int
-	let name: String
+
+    var count: Int
+    let name: String
 }
 ```
 
-The main difference here is the addition of `objectID`. Once this property is there, `BoxingPersistentStruct`'s bag of wonders (.save, .delete, .mutatingToObject) can be used.
+The main difference here is the addition of `objectID`. Once this property is there, `BoxingPersistentStruct`'s bag of wonders (`.save`, `.delete`, `.mutatingToObject`) can be used.
 
-What's the usecase of the `BoxingStruct` protocol then, you may ask. The advantage is that `BoxingStruct` does not require your value type to be mutable, and does not extend it with any mutable functions by default, keeping it a truly immutable value type. It still can use `.toObject` to convert a value type into an NSManagedObject, however it can't modify this object afterwards. So it is still useful for all scenarios where you're only performing insertions (like a cache, or a log) or where any modifications are performed in bulk (delete all), or where updating will be performed on the NSManagedObject itself (.valueForKey, .save).
+What's the usecase of the `BoxingStruct` protocol then, you may ask. The advantage is that `BoxingStruct` does not require your value type to be mutable, and does not extend it with any mutable functions by default, keeping it a truly immutable value type. It still can use `.toObject` to convert a value type into an `NSManagedObject`, however it can't modify this object afterwards. So it is still useful for all scenarios where you're only performing insertions (like a cache, or a log) or where any modifications are performed in bulk (delete all), or where updating will be performed on the `NSManagedObject` itself (`.valueForKey`, `.save`).
 
 #### Boxing and Sub Properties
 
 A word of advice: If you have value types in your value types, like:
 
-``` Swift
-struct Employee : BoxingPersistentStruct {
+```swift
+struct Employee: BoxingPersistentStruct {
     let EntityName = "Employee"
     var objectID: NSManagedObjectID?
     let name: String
 }
 
-struct Shop : BoxingPersistentStruct {
+struct Shop: BoxingPersistentStruct {
     let EntityName = "Counter"
     var objectID: NSManagedObjectID?
     let employees: [Employee]
@@ -174,35 +170,37 @@ Then ***you have to make sure*** that all value types conform to the same boxing
 
 #### Ephemeral Objects
 
-Most protocols in CoreValue mark the NSManagedObjectContext as an optional, which means that you don't have to supply it. Boxing will still work as expected, only the resulting NSManagedObjects will be ephemeral, that is, they're not bound to a context, they can't be stored. There're few use cases for this, but it is important to note that not supplying a NSManagedObjectContext will not result in an error.
+Most protocols in CoreValue mark the `NSManagedObjectContext` as an optional, which means that you don't have to supply it. Boxing will still work as expected, only the resulting `NSManagedObject`s will be ephemeral, that is, they're not bound to a context, they can't be stored. There're few use cases for this, but it is important to note that not supplying a `NSManagedObjectContext` will not result in an error.
 
 
 ### UnboxingStruct
 
-In CoreValue, `boxed` refers to values in an NSManagedObject container. I.e. NSNumber is boxing an Int, NSOrderedSet an Array, and NSManagedObject itself is boxing a value type (i.e. `Shop`).
+In CoreValue, `boxed` refers to values in an `NSManagedObject` container. I.e. `NSNumber` is boxing an `Int`, `NSOrderedSet` an `Array`, and `NSManagedObject` itself is boxing a value type (i.e. `Shop`).
 
-`UnboxingStruct` can be applied to any struct or class that you intend to initialize from a NSManagedObject. It only has one requirement that needs to be implemented, and that's `fromObject` which takes a NSManagedObject and should return a value type. Here's a very simple and unsafe example:
+`UnboxingStruct` can be applied to any struct or class that you intend to initialize from a `NSManagedObject`. It only has one requirement that needs to be implemented, and that's `fromObject` which takes an `NSManagedObject` and should return a value type. Here's a very simple and unsafe example:
 
-``` Swift
-struct Counter : UnboxingStruct
-	var count: Int
-	let name: String
-	static func fromObject(_ object: NSManagedObject) throws -> Counter {
-	return Counter(count: object.valueForKey("count")!.integerValue,
-           name: object.valueForKey("name") as! String)
-	}
+```swift
+struct Counter: UnboxingStruct
+    var count: Int
+    let name: String
+    static func fromObject(_ object: NSManagedObject) throws -> Counter {
+        return Counter(
+	    count: object.valueForKey("count")!.integerValue,
+	    name: object.valueForKey("name") as! String
+	)
+    }
 }
 ```
 
 Even though this example is not safe, we can observe several things from it. First, the implementation overhead is minimal. Second, the method can throw an error. That's because unboxing can fail in a multitude of ways (wrong value, no value, wrong entity, unknown entity, etc). If unboxing fails in any way, we throw an `NSError`. The other benefit of unboxing, that it allows us to take a shortcut (which CoreValue deviously copied from [Argo](https://github.com/thoughtbot/Argo)). Utilizing several custom operators, the unboxing process can be greatly simplified:
 
-``` Swift
-struct Counter : UnboxingStruct
-	var count: Int
-	let name: String
-	static func fromObject(_ object: NSManagedObject) throws -> Counter {
-		return try curry(self.init) <^> object <| "count" <^> object <| "name"
-	}
+```swift
+struct Counter: UnboxingStruct
+    var count: Int
+    let name: String
+    static func fromObject(_ object: NSManagedObject) throws -> Counter {
+        return try curry(self.init) <^> object <| "count" <^> object <| "name"
+    }
 }
 ```
 
@@ -231,57 +229,58 @@ Custom Operators are observed as a critical Swift feature, and rightly so. Too m
 
 `<|` is not the only operator needed to encode objects. Here's a list of all supported operators:
 
-           Operator                     | Description
-:-----:|----------------------------------------------------------
- <^>   |  Map the following operations (i.e. combine map operations)
- <\|   |  Unbox a normal value (i.e. var shop: Shop)
- <\|\| |  Unbox a set/list of values (i.e. var shops: [Shops])
- <\|?  |  Unbox an optional value (i.e. var shop: Shop?)
+| Operator | Description |
+|-|-|
+ `<^>`   | Map the following operations (i.e. combine `map` operations)
+ `<\|`   | Unbox a normal value (i.e. `var shop: Shop`)
+ `<\|\|` | Unbox a set/list of values (i.e. `var shops: [Shops]`)
+ `<\|?`  | Unbox an optional value (i.e. `var shop: Shop?`)
 
 ### CVManagedStruct
 
-Since most of the time you probably want boxing and unboxing functionality, CoreValue includes two handy type aliases, `CVManagedStruct` and `CVManagedPersistentStruct` which contain Boxing and Unboxing in one type.
+Since most of the time you probably want boxing and unboxing functionality, CoreValue includes two handy typealiases, `CVManagedStruct` and `CVManagedPersistentStruct` which contain Boxing and Unboxing in one type.
 
 ### `RawRepresentable` Enum support
 
 By extending `RawRepresentable`, you can use Swift `enums` right away without having to first make sure your enum conforms to `CVManagedStruct`.
 
-```
-enum CarType:String{
-    case Pickup = "pickup"
-    case Sedan = "sedan"
-    case Hatchback = "hatchback"
+```swift
+enum CarType: String {
+    case pickup
+    case sedan
+    case hatchback
 }
 
-extension CarType: Boxing,Unboxing {}
- 
- struct Car: CVManagedPersistentStruct {
-     static let EntityName = "Car"
-     var objectID: NSManagedObjectID?
-     var name: String
-     var type: CarType
-     
-     static func fromObject(_ o: NSManagedObject) throws -> Car {
-         return try curry(self.init)
-             <^> o <|? "objectID"
-             <^> o <| "name"
-             <^> o <| "type"
-     }
+extension CarType: Boxing, Unboxing {}
+
+struct Car: CVManagedPersistentStruct {
+    static let EntityName = "Car"
+    var objectID: NSManagedObjectID?
+    var name: String
+    var type: CarType
+
+    static func fromObject(_ o: NSManagedObject) throws -> Car {
+        return try curry(self.init)
+            <^> o <|? "objectID"
+            <^> o <| "name"
+            <^> o <| "type"
+    }
 }
 ```
 
 ## Docs
-Have a look at [CoreValue.swift](https://github.com/terhechte/CoreValue/blob/master/CoreValue/CoreValue.swift), it's full of docstrings
 
-Alternatively, there's a lot of usage in the [Unit Tests](https://github.com/terhechte/CoreValue/blob/master/CoreValueMacTests/CoreValueTests.swift).
+Have a look at [CoreValue.swift](/CoreValue/CoreValue.swift), it's full of docstrings.
+
+Alternatively, there's a lot of usage in the [Unit Tests](/CoreValueMacTests/CoreValueTests.swift).
 
 Here's a  more complex example of CoreValue in use:
 
-``` Swift
-struct Employee : CVManagedPersistentStruct {
-    
+```swift
+struct Employee: CVManagedPersistentStruct {
+
     static let EntityName = "Employee"
-    
+
     var objectID: NSManagedObjectID?
 
     let name: String
@@ -289,7 +288,7 @@ struct Employee : CVManagedPersistentStruct {
     let position: String?
     let department: String
     let job: String
-    
+
     static func fromObject(_ o: NSManagedObject) throws -> Employee {
         return try curry(self.init)
             <^> o <| "objectID"
@@ -333,51 +332,47 @@ for shop in shops {
 
 ## CVManagedUniqueStruct and REST / Serialization / JSON
 
-All the examples we've seen so far resolve around a use case where data is contained within your app. This means that the unique identifier of a NSManagedObject or Struct is dicated by the NSManagedObjectID unique identifier which Core Data generates. This is fine as long as you don't plan to interact with outside data. If your data is loaded from external sources (i.e. JSON from a Rest API) then it may already have a unique identifier. `CVManagedUniqueStruct`  allows you to force CoreValue / Core Data to use this external unique identifier in NSManagedObjectID's stead. The implementation is easy. You just have to conform to the `BoxingUniqueStruct` protocol which requires the implementation of a var naming the unique id field and a function returning the current ID value:
+All the examples we've seen so far resolve around a use case where data is contained within your app. This means that the unique identifier of an `NSManagedObject` or struct is dicated by the `NSManagedObjectID` unique identifier which CoreData generates. This is fine as long as you don't plan to interact with outside data. If your data is loaded from external sources (i.e. JSON from a Rest API) then it may already have a unique identifier. `CVManagedUniqueStruct` allows you to force CoreValue / CoreData to use this external unique identifier in `NSManagedObjectID`'s stead. The implementation is easy. You just have to conform to the `BoxingUniqueStruct` protocol which requires the implementation of a `var` naming the unique id field and a function returning the current ID value:
 
-``` Swift
-/** Name of the Identifier in the CoreData (e.g: 'id')
-  */
-static var IdentifierName: String {get}
+```swift
+/// Name of the Identifier in the CoreData (e.g: 'id')
+static var IdentifierName: String { get }
 
-/** Value of the Identifier for the current struct (e.g: 'self.id')
-  */
+/// Value of the Identifier for the current struct (e.g: 'self.id')
 func IdentifierValue() -> IdentifierType
 ```
 
 Here's a complete & simple example:
 
-``` Swift
-struct Author : CVManagedUniqueStruct {
-    
+```swift
+struct Author: CVManagedUniqueStruct {
+
     static let EntityName = "Author"
-    
+
     static var IdentifierName: String = "id"
-    
+
     func IdentifierValue() -> IdentifierType { return self.id }
-    
+
     let id: String
     let name: String
-    
+
     static func fromObject(_ o: NSManagedObject) throws -> Author {
         return try curry(self.init)
             <^> o <| "id"
             <^> o <| "name"
     }
 }
-
 ```
 
 Please not that `CVManagedUniqueStruct` adds an (roughly) O(n) overhead on top of `NSManagedObjectID` based solutions due to the way object lookup is currently implemented.
 
 ## State
 
-All Core Data Datatypes are supported, with the following **exceptions**:
+All CoreData Datatypes are supported, with the following **exceptions**:
 - Transformable
-- Unordered Collections / NSSet (Currently, only ordered collections are supported)
+- Unordered Collections / `NSSet` (Currently, only ordered collections are supported)
 
 Fetched properties are not supported yet.
-
 
 ## Swift 3.0 Conversion
 
@@ -387,7 +382,7 @@ The Swift 3.0 conversion changed a few things within the framework. In order to 
 2. Replace `func fromObject(object)` with `func fromObject(_ object)`
 3. Replace `return curry(self.init)...` with `return try curry(self.init)...`
 
-## Installation (iOS and OSX)
+## Installation (iOS and macOS)
 
 ### [CocoaPods]
 
@@ -429,11 +424,10 @@ The `import CoreValue` directive is required in order to use CoreValue.
 
 ### Manually
 
-1. Copy the CoreValue.swift and curry.swift file into your project.
-2. Add the `Core Data` framework to your project
+1. Copy the `CoreValue.swift` and `curry.swift` file into your project.
+2. Add the `CoreData` framework to your project
 
 There is no need for `import CoreValue` when manually installing.
-
 
 ## Contact
 
