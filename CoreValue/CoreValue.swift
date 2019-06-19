@@ -234,7 +234,7 @@ public protocol BoxingUniqueStruct : BoxingStruct {
      in the managedObjectStore or if deletion fails due to an underlying core data
      error.
      */
-    @discardableResult func delete(_ context: NSManagedObjectContext?) throws
+    func delete(_ context: NSManagedObjectContext?) throws
     
     /** Save an object to the managedObjectStore or update the current instance in the
      managedObjectStore with the current Value Type properties.
@@ -643,7 +643,7 @@ public extension BoxingUniqueStruct {
     }
     
     //TODO: Should check if object exists - This will create and delete object
-    @discardableResult func delete(_ context: NSManagedObjectContext?) throws {
+    func delete(_ context: NSManagedObjectContext?) throws {
         guard let ctx = context else { return }
         
         do {
@@ -653,7 +653,7 @@ public extension BoxingUniqueStruct {
             try ctx.save()
             
         } catch let error {
-            throw CVManagedStructError.structDeleteError(message: "Could not locate object in context \(context): \(error)")
+            throw CVManagedStructError.structDeleteError(message: "Could not locate object in context \(String(describing: context)): \(error)")
         }
     }
     
@@ -665,7 +665,7 @@ public extension BoxingUniqueStruct {
         try context.save()
     }
     
-    @discardableResult public func toObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
+    @discardableResult func toObject(_ context: NSManagedObjectContext?) throws -> NSManagedObject {
         let result = try self.managedObject(context)
         return try internalToObject(context, result: result, entity: self)
     }
@@ -778,7 +778,7 @@ public extension BoxingPersistentStruct {
             try ctx.save()
             
         } catch let error {
-            throw CVManagedStructError.structDeleteError(message: "Could not locate object \(oid) in context \(context): \(error)")
+            throw CVManagedStructError.structDeleteError(message: "Could not locate object \(oid) in context \(String(describing: context)): \(error)")
         }
         
         return true

@@ -654,7 +654,7 @@ class CoreValueQueryTests: XCTestCase {
     override func setUp() {
         super.setUp()
         for n in 0..<50 {
-            let employee = Employee(name: "employee \(n)", age: n + 10, position: nil, department: "", job: "")
+            let employee = Employee(name: "employee \(n)", age: Int16(n + 10), position: nil, department: "", job: "")
             do {
                 manyEmployees.append(try employee.toObject(self.context))
             } catch let e {
