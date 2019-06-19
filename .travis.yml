@@ -4,6 +4,7 @@ branches:
  only:
  - master
 
+osx_image: xcode10.2
 xcode_project: CoreValue.xcodeproj
 xcode_scheme: CoreValue
 script:
