@@ -1,6 +1,6 @@
 <p align="center">
 <img src="Documents/header.png" srcset="Documents/header.png 1x Documents/header@2x.png 2x" /><br/>
-<a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-3-orange.svg" /></a>
+<a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-5-orange.svg" /></a>
 <a href="https://github.com/Carthage/Carthage"><img src="https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat" /></a>
 <a href="https://cocoapods.org"><img src="https://img.shields.io/cocoapods/v/CoreValue.svg" /></a>
 <img src="https://img.shields.io/cocoapods/p/CoreValue.svg" />
@@ -15,17 +15,13 @@
 - iOS and Mac OS X support
 - Use with `structs`
 - Works fine with `let` and `var` based properties
-- Swift 3.0 
-- (for Swift 2.3, use the [swift2.3" branch](https://github.com/terhechte/CoreValue/tree/swift2.3))
-- (for Swift 2.2 use [Version 0.2](https://github.com/terhechte/CoreValue/releases/tag/v0.2.0))
+- Swift 5.0 
 
 ## Rationale
 
 Swift introduced versatile value types into the iOS and Cocoa development domains. They're lightweight, fast, safe, enforce immutability and much more. However, as soon as the need for CoreData in a project manifests itself, we have to go back to reference types and `@objc`. 
 
 CoreValue is a lightweight wrapper framework around Core Data. It takes care of `boxing` value types into Core Data objects and `unboxing` Core Data objects into value types. It also contains simple abstractions for easy querying, updating, saving, and deleting.
-
-If you're porting your app to Swift 3, please see the Swift 3 section at the bottom.
 
 ## Usage
 
@@ -374,14 +370,6 @@ All CoreData Datatypes are supported, with the following **exceptions**:
 
 Fetched properties are not supported yet.
 
-## Swift 3.0 Conversion
-
-The Swift 3.0 conversion changed a few things within the framework. In order to make it easier, here's a list of things to do:
-
-1. Replace `<*>` operators with `<^>`
-2. Replace `func fromObject(object)` with `func fromObject(_ object)`
-3. Replace `return curry(self.init)...` with `return try curry(self.init)...`
-
 ## Installation (iOS and macOS)
 
 ### [CocoaPods]
@@ -438,6 +426,9 @@ Benedikt Terhechte
 [Appventure.me](http://appventure.me)
 
 ## Changelog
+
+### Version 0.4.0
+- Swift 5 Support thanks to [DaGerry](https://github.com/DaGerry)
 
 ### Version 0.3.0
 - Swift 3 Support
