@@ -6,3 +6,5 @@ branches:
 
 xcode_project: CoreValue.xcodeproj
 xcode_scheme: CoreValue
+script:
+- xcodebuild clean build test -destination 'platform=iOS Simulator,name=iPhone 8,OS=12.2' -project CoreValue.xcodeproj -scheme CoreValue 
