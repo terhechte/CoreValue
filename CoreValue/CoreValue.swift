@@ -215,6 +215,12 @@ extension Int32: IdentifierType {
     }
 }
 
+extension Int64: IdentifierType {
+  public func predicate(_ name: String) -> NSPredicate {
+    return NSPredicate(format: "\(name) = %i", self)
+  }
+}
+
 /**
  Adds support for persistence using the struct unique identifier, i.e. any entity with the same identifier will be fetched, updated or deleted accordingly.
  */
